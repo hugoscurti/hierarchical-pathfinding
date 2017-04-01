@@ -5,14 +5,12 @@ using UnityEngine;
 using System.IO;
 using System;
 
-public class MapLoader : MonoBehaviour {
+public class MapDisplay : MonoBehaviour {
 
     //Variables to draw on gui
     private Texture2D RectTexture;
     private GUIStyle RectStyle;
-
-    private string BaseMapDirectory;
-
+    
     //Tile colors
     public Color Green = Color.green;
     public Color Black = Color.black;
@@ -27,8 +25,6 @@ public class MapLoader : MonoBehaviour {
 
     private void Awake()
     {
-        BaseMapDirectory = Path.Combine(Application.dataPath, "../Maps/map");
-
         map = Map.LoadMap("arena.map");
     }
    
@@ -46,10 +42,11 @@ public class MapLoader : MonoBehaviour {
         else
             TileUnit = Screen.height / map.Height;
 
-        Rect tile = new Rect();
-        tile.width = TileUnit;
-        tile.height = TileUnit;
-
+        Rect tile = new Rect()
+        {
+            width = TileUnit,
+            height = TileUnit
+        };
         int startx = Mathf.FloorToInt((float)Screen.width / 2 - ((float)map.Width / 2) * TileUnit);
         int starty = Mathf.FloorToInt((float)Screen.height / 2 - ((float)map.Height / 2) * TileUnit);
 
