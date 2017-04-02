@@ -1,5 +1,5 @@
 ﻿
-class Edge
+public class Edge
 {
     public Node start;
     public Node end;

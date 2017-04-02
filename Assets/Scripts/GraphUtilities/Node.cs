@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 
 
-class Node
+public class Node
 {
     public GridTile value;
     public List<Edge> edges;

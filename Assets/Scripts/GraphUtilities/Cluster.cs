@@ -7,7 +7,7 @@ using System.Text;
 /// <summary>
 /// Domain-independent, rectangular clusters
 /// </summary>
-class Cluster
+public class Cluster
 {
     //Boundaries of the cluster (with respect to the original map)
     public GridTile TopLeft;
