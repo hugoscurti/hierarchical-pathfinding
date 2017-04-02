@@ -6,9 +6,9 @@ using UnityEngine;
 
 public class Graph
 {
-    int depth;
+    public int depth;
     //List of clusters for every level of abstraction
-    List<Cluster>[] C;
+    public List<Cluster>[] C;
 
     Map map;
 
@@ -17,6 +17,7 @@ public class Graph
     /// </summary>
     public Graph(Map map, int MaxLevel, int clusterSize)
     {
+        depth = clusterSize;
         this.map = map;
 
         C = new List<Cluster>[MaxLevel];
@@ -70,25 +71,32 @@ public class Graph
             Cluster c1; Cluster c2;
             //Add border nodes for every clusters
             for (i = 0; i < clusters.Count; ++i)
+            {
+                c1 = clusters[i];
+
                 for (j = i + 1; j < clusters.Count; ++j)
                 {
-                    c1 = clusters[i];
                     c2 = clusters[j];
 
                     //Check if both clusters are adjacent
-                    if (c1.TopLeft.x == c2.TopLeft.x) {
+                    if (c1.TopLeft.x == c2.TopLeft.x)
+                    {
                         if (c1.BottomRight.y + 1 == c2.TopLeft.y)
                             CreateBorderNodes(c1, c2, false);
                         else if (c2.BottomRight.y + 1 == c1.TopLeft.y)
                             CreateBorderNodes(c2, c1, false);
 
-                    } else if (c1.TopLeft.y == c2.TopLeft.y) {
+                    }
+                    else if (c1.TopLeft.y == c2.TopLeft.y)
+                    {
                         if (c1.BottomRight.x + 1 == c2.TopLeft.x)
                             CreateBorderNodes(c1, c2, true);
                         else if (c2.BottomRight.x + 1 == c1.TopLeft.x)
                             CreateBorderNodes(c2, c1, true);
                     }
                 }
+            }
+                
 
             //TODO: Add Intra edges for every border nodes and pathfind between them
             //TODO: Consider edges from higher level clusters
@@ -116,18 +124,18 @@ public class Graph
         if (x)
         {
             iMin = c1.TopLeft.y;
-            iMax = c1.Height;
+            iMax = iMin + c1.Height;
         } else
         {
             iMin = c1.TopLeft.x;
-            iMax = c1.Width;
+            iMax = iMin + c1.Width;
         }
 
         int lineSize = 0;
         for (i = iMin; i < iMax; ++i)
         {
-            if ((x && (!map.Obstacles[c1.BottomRight.x][i] && !map.Obstacles[c2.TopLeft.x][i]))
-                || (!map.Obstacles[i][c1.BottomRight.y] && !map.Obstacles[i][c2.TopLeft.y]))
+            if ((x && (!map.Obstacles[i][c1.BottomRight.x] && !map.Obstacles[i][c2.TopLeft.x]))
+                || (!map.Obstacles[c1.BottomRight.y][i] && !map.Obstacles[c2.TopLeft.y][i]))
             {
                 lineSize++;
             } else {
@@ -148,7 +156,7 @@ public class Graph
             if (lineSize <= 5)
             {
                 //Line is too small, create 1 inter edges
-                CreateInterEdge(c1, c2, x, i - (i / 2 + 1));
+                CreateInterEdge(c1, c2, x, i - (lineSize / 2 + 1));
             }
             else
             {

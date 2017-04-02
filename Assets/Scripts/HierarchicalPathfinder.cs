@@ -12,9 +12,9 @@ public class HierarchicalPathfinder : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        map = Map.LoadMap("arena.map");
+        //map = Map.LoadMap("arena.map");
 
-        Graph g = new Graph(map, 1, 10);
+        //Graph g = new Graph(map, 1, 10);
     }
 
     // Update is called once per frame
