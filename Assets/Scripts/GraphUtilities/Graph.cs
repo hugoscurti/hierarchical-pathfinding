@@ -54,16 +54,15 @@ public class Graph
             for (i = 0; i < ClusterHeight; ++i)
                 for (j = 0; j < ClusterWidth; ++j)
                 {
-                    c = new Cluster()
-                    {
-                        TopLeft = new GridTile(j * clusterSize, i * clusterSize),
-
-                    };
-                    c.BottomRight = new GridTile(
-                        Mathf.Min(c.TopLeft.x + clusterSize - 1, map.Width - 1),
-                        Mathf.Min(c.TopLeft.y + clusterSize - 1, map.Height - 1));
-                    c.Width = c.BottomRight.x - c.TopLeft.x + 1;
-                    c.Height = c.BottomRight.y - c.TopLeft.y + 1;
+                    c = new Cluster();
+                    c.Boundaries.Min = new GridTile(j * clusterSize, i * clusterSize);
+                    c.Boundaries.Max = new GridTile(
+                        Mathf.Min(c.Boundaries.Min.x + clusterSize - 1, map.Width - 1),
+                        Mathf.Min(c.Boundaries.Min.y + clusterSize - 1, map.Height - 1));
+                    
+                    //Adjust size of cluster based on boundaries
+                    c.Width = c.Boundaries.Max.x - c.Boundaries.Min.x + 1;
+                    c.Height = c.Boundaries.Max.y - c.Boundaries.Min.y + 1;
 
                     clusters.Add(c);
                 }
@@ -79,19 +78,19 @@ public class Graph
                     c2 = clusters[j];
 
                     //Check if both clusters are adjacent
-                    if (c1.TopLeft.x == c2.TopLeft.x)
+                    if (c1.Boundaries.Min.x == c2.Boundaries.Min.x)
                     {
-                        if (c1.BottomRight.y + 1 == c2.TopLeft.y)
+                        if (c1.Boundaries.Max.y + 1 == c2.Boundaries.Min.y)
                             CreateBorderNodes(c1, c2, false);
-                        else if (c2.BottomRight.y + 1 == c1.TopLeft.y)
+                        else if (c2.Boundaries.Max.y + 1 == c1.Boundaries.Min.y)
                             CreateBorderNodes(c2, c1, false);
 
                     }
-                    else if (c1.TopLeft.y == c2.TopLeft.y)
+                    else if (c1.Boundaries.Min.y == c2.Boundaries.Min.y)
                     {
-                        if (c1.BottomRight.x + 1 == c2.TopLeft.x)
+                        if (c1.Boundaries.Max.x + 1 == c2.Boundaries.Min.x)
                             CreateBorderNodes(c1, c2, true);
-                        else if (c2.BottomRight.x + 1 == c1.TopLeft.x)
+                        else if (c2.Boundaries.Max.x + 1 == c1.Boundaries.Min.x)
                             CreateBorderNodes(c2, c1, true);
                     }
                 }
@@ -99,7 +98,6 @@ public class Graph
                 
 
             //TODO: Add Intra edges for every border nodes and pathfind between them
-            //TODO: Consider edges from higher level clusters
             for (i = 0; i < clusters.Count; ++i)
             {
 
@@ -123,19 +121,19 @@ public class Graph
         int i, iMin, iMax;
         if (x)
         {
-            iMin = c1.TopLeft.y;
+            iMin = c1.Boundaries.Min.y;
             iMax = iMin + c1.Height;
         } else
         {
-            iMin = c1.TopLeft.x;
+            iMin = c1.Boundaries.Min.x;
             iMax = iMin + c1.Width;
         }
 
         int lineSize = 0;
         for (i = iMin; i < iMax; ++i)
         {
-            if ((x && (!map.Obstacles[i][c1.BottomRight.x] && !map.Obstacles[i][c2.TopLeft.x]))
-                || (!map.Obstacles[c1.BottomRight.y][i] && !map.Obstacles[c2.TopLeft.y][i]))
+            if ((x && (!map.Obstacles[i][c1.Boundaries.Max.x] && !map.Obstacles[i][c2.Boundaries.Min.x]))
+                || (!map.Obstacles[c1.Boundaries.Max.y][i] && !map.Obstacles[c2.Boundaries.Min.y][i]))
             {
                 lineSize++;
             } else {
@@ -176,13 +174,13 @@ public class Graph
         Node n1, n2;
         if (x)
         {
-            g1 = new GridTile(c1.BottomRight.x, i);
-            g2 = new GridTile(c2.TopLeft.x, i);
+            g1 = new GridTile(c1.Boundaries.Max.x, i);
+            g2 = new GridTile(c2.Boundaries.Min.x, i);
         }
         else
         {
-            g1 = new GridTile(i, c1.BottomRight.y);
-            g2 = new GridTile(i, c2.TopLeft.y);
+            g1 = new GridTile(i, c1.Boundaries.Max.y);
+            g2 = new GridTile(i, c2.Boundaries.Min.y);
         }
 
         if (!c1.Nodes.TryGetValue(g1, out n1))

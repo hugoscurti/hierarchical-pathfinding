@@ -8,6 +8,8 @@ public class Map
     public int Width { get; set; }
     public int Height { get; set; }
 
+    public Boundaries Boundaries { get; set; }
+
     public int FreeTiles { get; set; }
 
     //Consider storing obstacles in a Hashset to save memory on large maps
@@ -17,14 +19,6 @@ public class Map
     public char[][] Tiles { get; set; }
 
     public Map() {}
-
-    public Map(int Width, int Height, bool[][] Obstacles, int FreeTiles)
-    {
-        this.Width = Width;
-        this.Height = Height;
-        this.Obstacles = Obstacles;
-        this.FreeTiles = FreeTiles;
-    }
 
     /// <summary>
     /// Loads a map from the base map directory
@@ -57,6 +51,13 @@ public class Map
 
             //Line 3 : width
             map.Width = ReadIntegerValue(sr, "width");
+
+            //Set boundaries according to width and height
+            map.Boundaries = new Boundaries
+            {
+                Min = new GridTile(0, 0),
+                Max = new GridTile(map.Width - 1, map.Height - 1)
+            };
 
             //Line 4 to end : map
             ReadLine(sr, "map");

@@ -30,7 +30,7 @@ public class Pathfinder : MonoBehaviour {
     }
 
 
-    public LinkedList<GridTile> FindPath(GridTile start, GridTile dest, Map map)
+    public LinkedList<GridTile> FindPath(GridTile start, GridTile dest, Boundaries boundaries, bool[][] obstacles)
     {
         Dictionary<GridTile, bool> Visited = new Dictionary<GridTile, bool>();
         Dictionary<GridTile, GridTile> Parent = new Dictionary<GridTile, GridTile>();
@@ -61,8 +61,8 @@ public class Pathfinder : MonoBehaviour {
                 neighbour.y = current.y + offsetNeighbour.y;
 
                 //Check if neighbour is an Obstacles
-                //Check if neighbour is outside of grid
-                if ( IsOutOfGrid(neighbour, map) || map.Obstacles[neighbour.x][neighbour.y] )
+                //Check if neighbour is outside of the boundaries specified
+                if ( IsOutOfGrid(neighbour, boundaries) || obstacles[neighbour.x][neighbour.y] )
                     continue;
 
                 //Already visited
@@ -96,10 +96,10 @@ public class Pathfinder : MonoBehaviour {
         }
     }
 
-    private bool IsOutOfGrid(GridTile pos, Map map)
+    private bool IsOutOfGrid(GridTile pos, Boundaries boundaries)
     {
-        return (pos.x < 0 || pos.x >= map.Width) ||
-               (pos.y < 0 || pos.y >= map.Height);
+        return (pos.x < boundaries.Min.x || pos.x > boundaries.Max.x) ||
+               (pos.y < boundaries.Min.y || pos.y > boundaries.Max.y);
     }
 
     //Rebuild of grid tiles

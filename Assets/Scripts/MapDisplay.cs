@@ -93,23 +93,23 @@ public class MapDisplay : MonoBehaviour {
             //Min vertical line
             line.width = 0.5f;
             line.height = c.Height + line.width;
-            line.x = c.TopLeft.x - (line.width / 2f);
-            line.y = c.TopLeft.y - (line.width / 2f);
+            line.x = c.Boundaries.Min.x - (line.width / 2f);
+            line.y = c.Boundaries.Min.y - (line.width / 2f);
             GUIDrawRect(line, Black);
 
             //Max vertical line
-            line.x = c.BottomRight.x + (1 - line.width / 2f);
+            line.x = c.Boundaries.Max.x + (1 - line.width / 2f);
             GUIDrawRect(line, Black);
 
             //Min horizontal line
             line.height = 0.5f;
             line.width = c.Width + line.height;
-            line.x = c.TopLeft.x - line.height/2f;
-            line.y = c.TopLeft.y - line.height/2f;
+            line.x = c.Boundaries.Min.x - line.height/2f;
+            line.y = c.Boundaries.Min.y - line.height/2f;
             GUIDrawRect(line, Black);
 
             //Max Horizontal Line
-            line.y = c.BottomRight.y + (1 - line.height/2f);
+            line.y = c.Boundaries.Max.y + (1 - line.height/2f);
             GUIDrawRect(line, Black);
 
             

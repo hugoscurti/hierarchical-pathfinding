@@ -10,8 +10,7 @@ using System.Text;
 public class Cluster
 {
     //Boundaries of the cluster (with respect to the original map)
-    public GridTile TopLeft;
-    public GridTile BottomRight;
+    public Boundaries Boundaries;
     public Dictionary<GridTile, Node> Nodes;
 
     public int Width;
@@ -19,6 +18,7 @@ public class Cluster
 
     public Cluster()
     {
+        Boundaries = new Boundaries();
         Nodes = new Dictionary<GridTile, Node>();
     }
 
