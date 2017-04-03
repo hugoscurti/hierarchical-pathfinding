@@ -1,40 +1,34 @@
 ﻿using Priority_Queue;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Pathfinder : MonoBehaviour {
+public class Pathfinder {
 
     //Offset used to get neighbours of a cell (in manhattan setup)
-    GridTile[] neighbours = {
+    static GridTile[] neighbours = {
         new GridTile(-1, 0),
         new GridTile(1, 0),
         new GridTile(0, -1),
         new GridTile(0, 1)
     };
 
-    //Simple priority queue, from this repo https://github.com/BlueRaja/High-Speed-Priority-Queue-for-C-Sharp
-    SimplePriorityQueue<GridTile, float> pq;
 
-    void Start()
-    {
-        //Initialize Priority Queue
-        pq = new SimplePriorityQueue<GridTile, float>();
-    }
-
-    private int EuclidianDistanceSquared(GridTile tile1, GridTile tile2)
+    private static int EuclidianDistanceSquared(GridTile tile1, GridTile tile2)
     {
         return (int) (
             Mathf.Pow(tile2.x - tile1.x, 2) + Mathf.Pow(tile2.y - tile1.y, 2)
         );
     }
 
-
-    public LinkedList<GridTile> FindPath(GridTile start, GridTile dest, Boundaries boundaries, bool[][] obstacles)
+    //TODO: Handle diagonal movements?
+    public static LinkedList<GridTile> FindPath(GridTile start, GridTile dest, Boundaries boundaries, bool[][] obstacles)
     {
         Dictionary<GridTile, bool> Visited = new Dictionary<GridTile, bool>();
         Dictionary<GridTile, GridTile> Parent = new Dictionary<GridTile, GridTile>();
         Dictionary<GridTile, float> gScore = new Dictionary<GridTile, float>();
+
+        //Simple priority queue, from this repo https://github.com/BlueRaja/High-Speed-Priority-Queue-for-C-Sharp
+        SimplePriorityQueue<GridTile, float> pq = new SimplePriorityQueue<GridTile, float>();
         bool found = false;
 
         pq.Clear();
@@ -62,7 +56,7 @@ public class Pathfinder : MonoBehaviour {
 
                 //Check if neighbour is an Obstacles
                 //Check if neighbour is outside of the boundaries specified
-                if ( IsOutOfGrid(neighbour, boundaries) || obstacles[neighbour.x][neighbour.y] )
+                if ( IsOutOfGrid(neighbour, boundaries) || obstacles[neighbour.y][neighbour.x] )
                     continue;
 
                 //Already visited
@@ -96,14 +90,14 @@ public class Pathfinder : MonoBehaviour {
         }
     }
 
-    private bool IsOutOfGrid(GridTile pos, Boundaries boundaries)
+    private static bool IsOutOfGrid(GridTile pos, Boundaries boundaries)
     {
         return (pos.x < boundaries.Min.x || pos.x > boundaries.Max.x) ||
                (pos.y < boundaries.Min.y || pos.y > boundaries.Max.y);
     }
 
     //Rebuild of grid tiles
-    private LinkedList<GridTile> RebuildPath(Dictionary<GridTile, GridTile> Parent, GridTile dest)
+    private static LinkedList<GridTile> RebuildPath(Dictionary<GridTile, GridTile> Parent, GridTile dest)
     {
         LinkedList<GridTile> res = new LinkedList<GridTile>();
 
