@@ -16,8 +16,6 @@ public class MapDisplay : MonoBehaviour {
     public Color Black = Color.black;
     public Color White = Color.white;
 
-    public RectTransform mainPanel;
-
     private Map map;
     private Graph graph;
 
@@ -140,8 +138,6 @@ public class MapDisplay : MonoBehaviour {
                 }
             }
         }
-
-        int g = 0;
 
     }
 

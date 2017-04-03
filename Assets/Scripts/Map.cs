@@ -13,6 +13,7 @@ public class Map
     public int FreeTiles { get; set; }
 
     //Consider storing obstacles in a Hashset to save memory on large maps
+    //TODO: Consider storing obstacles with x values as first index and y values as second index!
     public bool[][] Obstacles { get; set; }
 
     //Original characters that forms the whole map
@@ -35,7 +36,7 @@ public class Map
     /// <summary>
     /// Reads map and returns a map object 
     /// </summary>
-    static Map ReadMap(FileInfo file)
+    private static Map ReadMap(FileInfo file)
     {
         Map map = new Map();
 

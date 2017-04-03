@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 
 using System;
+using System.Diagnostics;
 
 [Serializable()]
+[DebuggerDisplay("({x}, {y})")]
 public class GridTile {
     public int x;
     public int y;
@@ -64,4 +66,5 @@ public class GridTile {
     {
         return o1.Equals(o2);
     }
+
 }

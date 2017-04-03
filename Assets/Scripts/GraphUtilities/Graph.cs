@@ -43,7 +43,7 @@ public class Graph
     {
         List<Cluster> clusters = new List<Cluster>();
 
-        Cluster c;
+        Cluster c1; Cluster c2;
         int ClusterHeight = Mathf.CeilToInt((float)map.Height / clusterSize);
         int ClusterWidth = Mathf.CeilToInt((float)map.Width / clusterSize);
 
@@ -54,21 +54,20 @@ public class Graph
             for (i = 0; i < ClusterHeight; ++i)
                 for (j = 0; j < ClusterWidth; ++j)
                 {
-                    c = new Cluster();
-                    c.Boundaries.Min = new GridTile(j * clusterSize, i * clusterSize);
-                    c.Boundaries.Max = new GridTile(
-                        Mathf.Min(c.Boundaries.Min.x + clusterSize - 1, map.Width - 1),
-                        Mathf.Min(c.Boundaries.Min.y + clusterSize - 1, map.Height - 1));
-                    
-                    //Adjust size of cluster based on boundaries
-                    c.Width = c.Boundaries.Max.x - c.Boundaries.Min.x + 1;
-                    c.Height = c.Boundaries.Max.y - c.Boundaries.Min.y + 1;
+                    c1 = new Cluster();
+                    c1.Boundaries.Min = new GridTile(j * clusterSize, i * clusterSize);
+                    c1.Boundaries.Max = new GridTile(
+                        Mathf.Min(c1.Boundaries.Min.x + clusterSize - 1, map.Width - 1),
+                        Mathf.Min(c1.Boundaries.Min.y + clusterSize - 1, map.Height - 1));
 
-                    clusters.Add(c);
+                    //Adjust size of cluster based on boundaries
+                    c1.Width = c1.Boundaries.Max.x - c1.Boundaries.Min.x + 1;
+                    c1.Height = c1.Boundaries.Max.y - c1.Boundaries.Min.y + 1;
+
+                    clusters.Add(c1);
                 }
 
-            Cluster c1; Cluster c2;
-            //Add border nodes for every clusters
+            //Add border nodes for every adjacent pair of clusters
             for (i = 0; i < clusters.Count; ++i)
             {
                 c1 = clusters[i];
@@ -95,12 +94,11 @@ public class Graph
                     }
                 }
             }
-                
 
             //TODO: Add Intra edges for every border nodes and pathfind between them
             for (i = 0; i < clusters.Count; ++i)
             {
-
+                GenerateIntraEdges(clusters[i]);
             }
 
         } else
@@ -198,5 +196,57 @@ public class Graph
         n1.edges.Add(new Edge() { start = n1, end = n2, type = EdgeType.INTER, weight = 1 });
         n2.edges.Add(new Edge() { start = n2, end = n1, type = EdgeType.INTER, weight = 1 });
     }
-        
+     
+    private void GenerateIntraEdges(Cluster c)
+    {
+        Edge e1 = null, e2 = null;
+        LinkedListNode<GridTile> iterator;
+
+        //Iterate over each pair of nodes
+        foreach (KeyValuePair<GridTile, Node> entry1 in c.Nodes)
+            foreach (KeyValuePair<GridTile, Node> entry2 in c.Nodes)
+            {
+                if (entry1.Value != entry2.Value)
+                {
+                    e1 = new Edge()
+                    {
+                        start = entry1.Value,
+                        end = entry2.Value,
+                        type = EdgeType.INTRA
+                    };
+                    e2 = new Edge()
+                    {
+                        start = entry2.Value,
+                        end = entry1.Value,
+                        type = EdgeType.INTRA
+                    };
+
+                    //Path contains start and end nodes
+                    e1.UnderlyingPath = Pathfinder.FindPath(entry1.Value.value, entry2.Value.value, c.Boundaries, map.Obstacles);
+
+                    if (e1.UnderlyingPath.Count == 0)
+                    {
+                        //Unreachable nodes
+                        e1.UnderlyingPath = null;
+                        e1.weight = float.PositiveInfinity;
+                        e2.UnderlyingPath = null;
+                        e2.weight = float.PositiveInfinity;
+                    } else {
+                        //TODO: use weights instead of count for higher levels of abstraction
+                        e1.weight = e1.UnderlyingPath.Count - 1;
+                        e2.weight = e1.weight;
+
+                        //Store inverse path in node e.end
+                        e2.UnderlyingPath = new LinkedList<GridTile>();
+                        iterator = e1.UnderlyingPath.Last;
+                        while (iterator != null)
+                        {
+                            e2.UnderlyingPath.AddLast(iterator.Value);
+                            iterator = iterator.Previous;
+                        }
+                    }
+                    
+                }
+            }
+    }
 }
