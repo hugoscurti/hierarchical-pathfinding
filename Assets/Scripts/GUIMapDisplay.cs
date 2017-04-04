@@ -5,7 +5,7 @@ using UnityEngine;
 using System.IO;
 using System;
 
-public class MapDisplay : MonoBehaviour {
+public class GUIMapDisplay : MonoBehaviour {
 
     //Variables to draw on gui
     private Texture2D RectTexture;
@@ -18,6 +18,7 @@ public class MapDisplay : MonoBehaviour {
 
     private Map map;
     private Graph graph;
+    
 
     //Tile size for drawing the map on screen
     float TileUnit;
@@ -45,6 +46,7 @@ public class MapDisplay : MonoBehaviour {
         GUIDrawMap();
         GUIDrawGraph(0);
     }
+
 
     public void GUIDrawMap()
     {       
@@ -79,6 +81,7 @@ public class MapDisplay : MonoBehaviour {
             }
         }
     }
+
 
     public void GUIDrawGraph(int layer)
     {
