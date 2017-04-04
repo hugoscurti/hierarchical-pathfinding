@@ -131,7 +131,7 @@ public class Graph
         for (i = iMin; i < iMax; ++i)
         {
             if ((x && (!map.Obstacles[i][c1.Boundaries.Max.x] && !map.Obstacles[i][c2.Boundaries.Min.x]))
-                || (!map.Obstacles[c1.Boundaries.Max.y][i] && !map.Obstacles[c2.Boundaries.Min.y][i]))
+                || !x && (!map.Obstacles[c1.Boundaries.Max.y][i] && !map.Obstacles[c2.Boundaries.Min.y][i]))
             {
                 lineSize++;
             } else {
@@ -165,7 +165,7 @@ public class Graph
         }
     }
 
-    //Inter edge are edges that crosses clusters
+    //Inter edges are edges that crosses clusters
     private void CreateInterEdge(Cluster c1, Cluster c2, bool x, int i)
     {
         GridTile g1, g2;
@@ -197,56 +197,69 @@ public class Graph
         n2.edges.Add(new Edge() { start = n2, end = n1, type = EdgeType.INTER, weight = 1 });
     }
      
+    //Intra edges are edges that lives inside clusters
+    //TODO: Fix bug where we add twice all intra edges
     private void GenerateIntraEdges(Cluster c)
     {
+        int i, j;
+        Node n1, n2;
         Edge e1 = null, e2 = null;
         LinkedListNode<GridTile> iterator;
 
-        //Iterate over each pair of nodes
-        foreach (KeyValuePair<GridTile, Node> entry1 in c.Nodes)
-            foreach (KeyValuePair<GridTile, Node> entry2 in c.Nodes)
+        /* We do this so that we can iterate through pairs once, 
+         * by keeping the second index always higher than the first */
+        var nodes = new List<Node>(c.Nodes.Values);
+        
+        for(i =0; i < nodes.Count; ++i)
+        {
+            n1 = nodes[i];
+            for (j = i + 1; j < nodes.Count; ++j)
             {
-                if (entry1.Value != entry2.Value)
+                n2 = nodes[j];
+
+                e1 = new Edge()
                 {
-                    e1 = new Edge()
-                    {
-                        start = entry1.Value,
-                        end = entry2.Value,
-                        type = EdgeType.INTRA
-                    };
-                    e2 = new Edge()
-                    {
-                        start = entry2.Value,
-                        end = entry1.Value,
-                        type = EdgeType.INTRA
-                    };
+                    start = n1,
+                    end = n2,
+                    type = EdgeType.INTRA
+                };
+                e2 = new Edge()
+                {
+                    start = n2,
+                    end = n1,
+                    type = EdgeType.INTRA
+                };
 
-                    //Path contains start and end nodes
-                    e1.UnderlyingPath = Pathfinder.FindPath(entry1.Value.value, entry2.Value.value, c.Boundaries, map.Obstacles);
+                //Path contains start and end nodes
+                e1.UnderlyingPath = Pathfinder.FindPath(n1.value, n2.value, c.Boundaries, map.Obstacles);
 
-                    if (e1.UnderlyingPath.Count == 0)
-                    {
-                        //Unreachable nodes
-                        e1.UnderlyingPath = null;
-                        e1.weight = float.PositiveInfinity;
-                        e2.UnderlyingPath = null;
-                        e2.weight = float.PositiveInfinity;
-                    } else {
-                        //TODO: use weights instead of count for higher levels of abstraction
-                        e1.weight = e1.UnderlyingPath.Count - 1;
-                        e2.weight = e1.weight;
-
-                        //Store inverse path in node e.end
-                        e2.UnderlyingPath = new LinkedList<GridTile>();
-                        iterator = e1.UnderlyingPath.Last;
-                        while (iterator != null)
-                        {
-                            e2.UnderlyingPath.AddLast(iterator.Value);
-                            iterator = iterator.Previous;
-                        }
-                    }
-                    
+                if (e1.UnderlyingPath.Count == 0)
+                {
+                    //Unreachable nodes
+                    e1.UnderlyingPath = null;
+                    e1.weight = float.PositiveInfinity;
+                    e2.UnderlyingPath = null;
+                    e2.weight = float.PositiveInfinity;
                 }
+                else
+                {
+                    //TODO: use weights instead of count for higher levels of abstraction
+                    e1.weight = e1.UnderlyingPath.Count - 1;
+                    e2.weight = e1.weight;
+
+                    //Store inverse path in node e.end
+                    e2.UnderlyingPath = new LinkedList<GridTile>();
+                    iterator = e1.UnderlyingPath.Last;
+                    while (iterator != null)
+                    {
+                        e2.UnderlyingPath.AddLast(iterator.Value);
+                        iterator = iterator.Previous;
+                    }
+                }
+
+                n1.edges.Add(e1);
+                n2.edges.Add(e2);
             }
+        }
     }
 }
