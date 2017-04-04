@@ -198,7 +198,6 @@ public class Graph
     }
      
     //Intra edges are edges that lives inside clusters
-    //TODO: Fix bug where we add twice all intra edges
     private void GenerateIntraEdges(Cluster c)
     {
         int i, j;
@@ -233,15 +232,8 @@ public class Graph
                 //Path contains start and end nodes
                 e1.UnderlyingPath = Pathfinder.FindPath(n1.value, n2.value, c.Boundaries, map.Obstacles);
 
-                if (e1.UnderlyingPath.Count == 0)
-                {
-                    //Unreachable nodes
-                    e1.UnderlyingPath = null;
-                    e1.weight = float.PositiveInfinity;
-                    e2.UnderlyingPath = null;
-                    e2.weight = float.PositiveInfinity;
-                }
-                else
+                //Store path only if there is one
+                if (e1.UnderlyingPath.Count != 0)
                 {
                     //TODO: use weights instead of count for higher levels of abstraction
                     e1.weight = e1.UnderlyingPath.Count - 1;
@@ -255,10 +247,10 @@ public class Graph
                         e2.UnderlyingPath.AddLast(iterator.Value);
                         iterator = iterator.Previous;
                     }
-                }
 
-                n1.edges.Add(e1);
-                n2.edges.Add(e2);
+                    n1.edges.Add(e1);
+                    n2.edges.Add(e2);
+                }
             }
         }
     }
