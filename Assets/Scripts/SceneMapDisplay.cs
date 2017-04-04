@@ -122,9 +122,12 @@ public class SceneMapDisplay : MonoBehaviour {
         pos.y = c.Boundaries.Min.y + c.Height / 2f;
         DrawSprite(pos, scale, Black, 2, rot, Clusters);
 
-        //Max vertical line
-        pos.x = c.Boundaries.Max.x + 1;
-        DrawSprite(pos, scale, Black, 2, rot, Clusters);
+        //Draw Max Vertical only if border is at the right boundary
+        if (c.Boundaries.Max.x == map.Boundaries.Max.x)
+        {
+            pos.x = c.Boundaries.Max.x + 1;
+            DrawSprite(pos, scale, Black, 2, rot, Clusters);
+        }
 
         //Min horizontal line
         scale.y = 0.5f;
@@ -133,9 +136,12 @@ public class SceneMapDisplay : MonoBehaviour {
         pos.y = c.Boundaries.Min.y;
         DrawSprite(pos, scale, Black, 2, rot, Clusters);
 
-        //Max Horizontal Line
-        pos.y = c.Boundaries.Max.y + 1;
-        DrawSprite(pos, scale, Black, 2, rot, Clusters);
+        //Draw Max horizontal only if cluster is at boundary
+        if(c.Boundaries.Max.y == map.Boundaries.Max.y)
+        {
+            pos.y = c.Boundaries.Max.y + 1;
+            DrawSprite(pos, scale, Black, 2, rot, Clusters);
+        }
     }
 
     private void DrawSprite(Vector3 pos, Vector3 scale, Color color, int sortOrder, Quaternion rot, GameObject parent)
