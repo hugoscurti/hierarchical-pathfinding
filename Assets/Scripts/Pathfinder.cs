@@ -12,12 +12,67 @@ public class Pathfinder {
         new GridTile(0, 1)
     };
 
+    private static int EuclidianDistanceSquared(Node node1, Node node2)
+    {
+        return EuclidianDistanceSquared(node1.pos, node2.pos);
+    }
+
 
     private static int EuclidianDistanceSquared(GridTile tile1, GridTile tile2)
     {
         return (int) (
             Mathf.Pow(tile2.x - tile1.x, 2) + Mathf.Pow(tile2.y - tile1.y, 2)
         );
+    }
+
+    public static LinkedList<Edge> FindPath(Node start, Node dest)
+    {
+        HashSet<GridTile> Visited = new HashSet<GridTile>();
+        Dictionary<GridTile, Edge> Parent = new Dictionary<GridTile, Edge>();
+        Dictionary<GridTile, float> gScore = new Dictionary<GridTile, float>();
+
+        SimplePriorityQueue<Node, float> pq = new SimplePriorityQueue<Node, float>();
+
+        float temp_gCost, prev_gCost;
+
+        gScore[start.pos] = 0;
+        pq.Enqueue(start, EuclidianDistanceSquared(start, dest));
+        Node current;
+
+        while(pq.Count > 0)
+        {
+            current = pq.Dequeue();
+            if (current.pos.Equals(dest.pos))
+                //Rebuild path and return it
+                return RebuildPath(Parent, current);
+
+
+            Visited.Add(current.pos);
+
+            //Visit all neighbours through edges going out of node
+            foreach (Edge e in current.edges)
+            {
+                //Check if we visited the outer end of the edge
+                if (Visited.Contains(e.end.pos))
+                    continue;
+
+                temp_gCost = gScore[current.pos] + e.weight;
+                
+                //If new value is not better then do nothing
+                if (gScore.TryGetValue(e.end.pos, out prev_gCost) && temp_gCost >= prev_gCost)
+                    continue;
+
+                //Otherwise store the new value and add the destination into the queue
+                Parent[e.end.pos] = e;
+                gScore[e.end.pos] = temp_gCost;
+
+                pq.Enqueue(e.end, temp_gCost + EuclidianDistanceSquared(e.end, dest));
+            }
+        }
+        
+        //If we go through here that means we didn't find a path
+        Debug.Log("Can't reach the node specified");
+        return new LinkedList<Edge>();
     }
 
     //TODO: Handle diagonal movements?
@@ -29,9 +84,7 @@ public class Pathfinder {
 
         //Simple priority queue, from this repo https://github.com/BlueRaja/High-Speed-Priority-Queue-for-C-Sharp
         SimplePriorityQueue<GridTile, float> pq = new SimplePriorityQueue<GridTile, float>();
-        bool found = false;
 
-        pq.Clear();
         float temp_gCost, prev_gCost;
 
         gScore[start] = 0;
@@ -42,10 +95,9 @@ public class Pathfinder {
         {
             current = pq.Dequeue();
             if (current.Equals(dest))
-            {
-                found = true;
-                break;
-            }
+                //Rebuild path
+                return RebuildPath(Parent, dest);
+
             Visited[current] = true;
 
             //Visit all neighbours of current
@@ -78,16 +130,8 @@ public class Pathfinder {
             }
         }
 
-        if (found)
-        {
-            //Rebuild path
-            return RebuildPath(Parent, dest);
-        }
-        else
-        {
-            Debug.Log("Can't reach the node specified");
-            return new LinkedList<GridTile>();
-        }
+        Debug.Log("Can't reach the node specified");
+        return new LinkedList<GridTile>();
     }
 
     private static bool IsOutOfGrid(GridTile pos, Boundaries boundaries)
@@ -105,6 +149,23 @@ public class Pathfinder {
         do {
             res.AddFirst(current);
         } while (Parent.TryGetValue(current, out current));
+
+        return res;
+    }
+
+
+    //Rebuild edges
+    private static LinkedList<Edge> RebuildPath(Dictionary<GridTile, Edge> Parent, Node dest)
+    {
+        LinkedList<Edge> res = new LinkedList<Edge>();
+        GridTile current = dest.pos;
+        Edge e = null;
+
+        while(Parent.TryGetValue(current, out e))
+        {
+            res.AddFirst(e);
+            current = e.start.pos;
+        }
 
         return res;
     }

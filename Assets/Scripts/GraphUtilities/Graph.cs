@@ -28,17 +28,17 @@ public class Graph
         }
     }
 
-    private void BuildGraph()
-    {
-
+    /// <summary>
+    /// Verify whether two clusters connect with each other through their inter edges
+    /// </summary>
+    public bool IsReachable(Cluster c1, Cluster c2) {
+        throw new NotImplementedException("Not yet implemented");
     }
+
 
     /// <summary>
     /// Build Clusters of a certain level, given the size of a cluster
     /// </summary>
-    /// <param name="level"></param>
-    /// <param name="clusterSize">The size of a cluster edge</param>
-    /// <returns></returns>
     private List<Cluster> BuildClusters(int level, int clusterSize)
     {
         List<Cluster> clusters = new List<Cluster>();
@@ -230,7 +230,7 @@ public class Graph
                 };
 
                 //Path contains start and end nodes
-                e1.UnderlyingPath = Pathfinder.FindPath(n1.value, n2.value, c.Boundaries, map.Obstacles);
+                e1.UnderlyingPath = Pathfinder.FindPath(n1.pos, n2.pos, c.Boundaries, map.Obstacles);
 
                 //Store path only if there is one
                 if (e1.UnderlyingPath.Count != 0)

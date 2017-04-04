@@ -17,6 +17,7 @@ public class Map
     public bool[][] Obstacles { get; set; }
 
     //Original characters that forms the whole map
+    //TODO: Same as obstacles!
     public char[][] Tiles { get; set; }
 
     public Map() {}

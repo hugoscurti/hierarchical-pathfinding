@@ -11,6 +11,9 @@ public class SceneMapDisplay : MonoBehaviour {
 
     //Camera
     public Camera cam;
+    public float ZoomSpeed;
+
+    float defaultCamSize;
 
     private Map map;
     private Graph graph;
@@ -28,15 +31,16 @@ public class SceneMapDisplay : MonoBehaviour {
 
     void Awake ()
     {
-        map = Map.LoadMap("arena.map");
-        graph = new Graph(map, 1, 10);
+        map = Map.LoadMap("arena2.map");
+        graph = new Graph(map, 1, 20);
     }
 
     // Use this for initialization
     void Start () {
         //Adjust camera with respect to the map's size
         cam.transform.position = new Vector3(map.Width / 2f, -map.Height / 2f, -map.Width);
-        cam.orthographicSize = map.Height/2f + 3;
+        defaultCamSize = map.Height / 2f + 3;
+        cam.orthographicSize = defaultCamSize;
 
         //Instantiate Empty Containes for objects
         MapGameObj = new GameObject("Map");
@@ -99,10 +103,10 @@ public class SceneMapDisplay : MonoBehaviour {
                 //Draw Edges
                 foreach (Edge e in node.Value.edges)
                 {
-                    if (!Visited.Contains(e.end.value))
+                    if (!Visited.Contains(e.end.pos))
                     {
                         //Draw the edge
-                        DrawEdge(e.start.value, e.end.value);
+                        DrawEdge(e.start.pos, e.end.pos);
                     }
                 }
             }
@@ -195,6 +199,19 @@ public class SceneMapDisplay : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		
-	}
+        HandleZoom();
+    }
+
+    private void HandleZoom()
+    {
+        float delta = Input.GetAxis("Mouse ScrollWheel");
+        if (delta > 0 || delta < 0)
+        {
+            cam.orthographicSize += ZoomSpeed * -delta;
+
+            //Bound cam size
+            if (cam.orthographicSize < 0.1f) cam.orthographicSize = 0.1f;
+            if (cam.orthographicSize > 1000) cam.orthographicSize = 1000;
+        }
+    }
 }

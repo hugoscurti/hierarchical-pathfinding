@@ -1,17 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 
 
 public class Node
 {
-    public GridTile value;
+    public GridTile pos;
     public List<Edge> edges;
 
     public Node(GridTile value)
     {
-        this.value = value;
+        this.pos = value;
         edges = new List<Edge>();
     }
 }

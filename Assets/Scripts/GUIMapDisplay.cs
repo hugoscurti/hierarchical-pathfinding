@@ -129,13 +129,13 @@ public class GUIMapDisplay : MonoBehaviour {
                 //Draw Edges
                 foreach (Edge e in node.Value.edges)
                 {
-                    if (!Visited.Contains(e.end.value))
+                    if (!Visited.Contains(e.end.pos))
                     {
                         //Draw the edge
-                        line.width = e.end.value.x == node.Key.x ? 0.5f : Mathf.Abs(e.end.value.x - node.Key.x);
-                        line.height = e.end.value.y == node.Key.y ? 0.5f : Mathf.Abs(e.end.value.y - node.Key.y);
-                        line.x = e.end.value.x < node.Key.x ? e.end.value.x + 0.5f / 2 : node.Key.x + 0.5f / 2;
-                        line.y = e.end.value.y < node.Key.y ? e.end.value.y + 0.5f / 2 : node.Key.y + 0.5f / 2;
+                        line.width = e.end.pos.x == node.Key.x ? 0.5f : Mathf.Abs(e.end.pos.x - node.Key.x);
+                        line.height = e.end.pos.y == node.Key.y ? 0.5f : Mathf.Abs(e.end.pos.y - node.Key.y);
+                        line.x = e.end.pos.x < node.Key.x ? e.end.pos.x + 0.5f / 2 : node.Key.x + 0.5f / 2;
+                        line.y = e.end.pos.y < node.Key.y ? e.end.pos.y + 0.5f / 2 : node.Key.y + 0.5f / 2;
                         GUIDrawRect(line, Black);
                     }
                 }
