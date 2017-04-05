@@ -28,9 +28,94 @@ public class Graph
         }
     }
 
-    public void InsertNode(Node n, int MaxLevel)
+    public Node[] InsertNode(GridTile pos, int MaxLevel)
     {
-        throw new NotImplementedException("Not yet implemented");
+        Node[] layerNodes = new Node[MaxLevel];
+        for(int i = 0; i < MaxLevel; ++i)
+        {
+            //Determine in which cluster should we add it
+            //TODO: Potentially find a better way to find the right cluster
+            foreach (Cluster c in C[i])
+            {
+                if (c.Boundaries.Min.x <= pos.x && c.Boundaries.Min.y <= pos.y &&
+                    c.Boundaries.Max.x >= pos.x && c.Boundaries.Max.y >= pos.y)
+                {
+                    //This is the right cluster
+                    layerNodes[i] = ConnectToBorder(pos, c, i);
+                    //TODO: Add the node in the cluster?
+                    break;
+                }
+            }
+        }
+
+        return layerNodes;
+    }
+
+    /// <summary>
+    /// Connect the grid tile to borders by creating a new node
+    /// </summary>
+    /// <returns>The node created</returns>
+    private Node ConnectToBorder(GridTile pos, Cluster c, int level)
+    {
+        Node newNode;
+
+        //If the position is an actual border node, then return it
+        if (c.Nodes.TryGetValue(pos, out newNode))
+            return newNode;
+
+        //Otherwise create a node and pathfind through border nodes
+        newNode = new Node(pos);
+        foreach (KeyValuePair<GridTile, Node> n in c.Nodes)
+        {
+            ConnectNodes(newNode, n.Value, c);
+        }
+
+        return newNode;
+    }
+
+    /// <summary>
+    /// Connect two nodes by pathfinding between them. 
+    /// </summary>
+    /// <remarks>We assume they are different nodes. If the path returned is 0, then there is no path that connects them.</remarks>
+    private void ConnectNodes(Node n1, Node n2, Cluster c)
+    {
+        LinkedList<GridTile> path;
+        LinkedListNode<GridTile> iter;
+        Edge e1, e2;
+
+        path = Pathfinder.FindPath(n1.pos, n2.pos, c.Boundaries, map.Obstacles);
+        if (path.Count > 0)
+        {
+            //TODO: use weights instead of count for higher levels of abstraction
+            e1 = new Edge()
+            {
+                start = n1,
+                end = n2,
+                type = EdgeType.INTRA,
+                weight = path.Count - 1,
+                UnderlyingPath = path
+            };
+
+            e2 = new Edge()
+            {
+                start = n2,
+                end = n1,
+                type = EdgeType.INTRA,
+                weight = e1.weight,
+                UnderlyingPath = new LinkedList<GridTile>()
+            };
+
+            //Store inverse path in node n2
+            iter = e1.UnderlyingPath.Last;
+            while (iter != null)
+            {
+                e2.UnderlyingPath.AddLast(iter.Value);
+                iter = iter.Previous;
+            }
+
+            n1.edges.Add(e1);
+            n2.edges.Add(e2);
+        }
     }
 
     /// <summary>
@@ -207,8 +292,6 @@ public class Graph
     {
         int i, j;
         Node n1, n2;
-        Edge e1 = null, e2 = null;
-        LinkedListNode<GridTile> iterator;
 
         /* We do this so that we can iterate through pairs once, 
          * by keeping the second index always higher than the first */
@@ -221,41 +304,7 @@ public class Graph
             {
                 n2 = nodes[j];
 
-                e1 = new Edge()
-                {
-                    start = n1,
-                    end = n2,
-                    type = EdgeType.INTRA
-                };
-                e2 = new Edge()
-                {
-                    start = n2,
-                    end = n1,
-                    type = EdgeType.INTRA
-                };
-
-                //Path contains start and end nodes
-                e1.UnderlyingPath = Pathfinder.FindPath(n1.pos, n2.pos, c.Boundaries, map.Obstacles);
-
-                //Store path only if there is one
-                if (e1.UnderlyingPath.Count != 0)
-                {
-                    //TODO: use weights instead of count for higher levels of abstraction
-                    e1.weight = e1.UnderlyingPath.Count - 1;
-                    e2.weight = e1.weight;
-
-                    //Store inverse path in node e.end
-                    e2.UnderlyingPath = new LinkedList<GridTile>();
-                    iterator = e1.UnderlyingPath.Last;
-                    while (iterator != null)
-                    {
-                        e2.UnderlyingPath.AddLast(iterator.Value);
-                        iterator = iterator.Previous;
-                    }
-
-                    n1.edges.Add(e1);
-                    n2.edges.Add(e2);
-                }
+                ConnectNodes(n1, n2, c);
             }
         }
     }

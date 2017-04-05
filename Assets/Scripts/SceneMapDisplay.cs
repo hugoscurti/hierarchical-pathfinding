@@ -29,6 +29,8 @@ public class SceneMapDisplay : MonoBehaviour {
     GameObject Nodes;
     GameObject Edges;
 
+    GameObject Path;
+
     void Awake ()
     {
     }
@@ -39,7 +41,7 @@ public class SceneMapDisplay : MonoBehaviour {
     }
 
 
-    public void SetMap(Map map, int ClusterSize, int LayerDepth)
+    public Graph SetMap(Map map, int ClusterSize, int LayerDepth)
     {
         Delete();
 
@@ -49,8 +51,25 @@ public class SceneMapDisplay : MonoBehaviour {
         graph = new Graph(map, LayerDepth, ClusterSize);
 
         DrawMap();
+
+        return graph;
     }
 
+    //Draw the path formed by the edges
+    public void DrawPath(LinkedList<Edge> path)
+    {
+        //Delete old path
+        Destroy(Path);
+        Path = new GameObject("Path");
+        Path.transform.SetParent(transform, false);
+
+        LinkedListNode<Edge> current = path.First;
+        while(current != null)
+        {
+            DrawEdge(current.Value.start.pos, current.Value.end.pos, Color.red, Path, 4);
+            current = current.Next;
+        }
+    }
 
     void Delete()
     {
@@ -58,6 +77,7 @@ public class SceneMapDisplay : MonoBehaviour {
         Destroy(Clusters);
         Destroy(Nodes);
         Destroy(Edges);
+        Destroy(Path);
     }
 
     void DrawMap()
@@ -137,7 +157,7 @@ public class SceneMapDisplay : MonoBehaviour {
                     if (!Visited.Contains(e.end.pos))
                     {
                         //Draw the edge
-                        DrawEdge(e.start.pos, e.end.pos);
+                        DrawEdge(e.start.pos, e.end.pos, Black, Edges, 2);
                     }
                 }
             }
@@ -200,7 +220,7 @@ public class SceneMapDisplay : MonoBehaviour {
                 Nodes);
     }
 
-    private void DrawEdge(GridTile start, GridTile end)
+    private void DrawEdge(GridTile start, GridTile end, Color color, GameObject parent, int sortOrder)
     {
         Vector3 pos = new Vector3(start.x, start.y, 3);
         Vector3 vEdge = new Vector3(end.x - start.x, end.y - start.y, 0);
@@ -217,7 +237,7 @@ public class SceneMapDisplay : MonoBehaviour {
 
         Quaternion rot = Quaternion.AngleAxis(angle, Vector3.forward);
 
-        DrawSprite(pos, scale, Black, 2, rot, Edges);
+        DrawSprite(pos, scale, color, sortOrder, rot, parent);
     }
 
     private void DrawTile(int x, int y, Color color)
