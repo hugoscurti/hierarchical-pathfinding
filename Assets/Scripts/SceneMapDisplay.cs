@@ -31,15 +31,46 @@ public class SceneMapDisplay : MonoBehaviour {
 
     void Awake ()
     {
-        map = Map.LoadMap("arena2.map");
-        graph = new Graph(map, 1, 20);
     }
 
     // Use this for initialization
-    void Start () {
+    void Start()
+    {
+    }
+
+
+    public void SetMap(Map map, int ClusterSize, int LayerDepth)
+    {
+        Delete();
+
+        //Delete previous map's game objects
+        this.map = map;
+
+        graph = new Graph(map, LayerDepth, ClusterSize);
+
+        DrawMap();
+    }
+
+
+    void Delete()
+    {
+        Destroy(MapGameObj);
+        Destroy(Clusters);
+        Destroy(Nodes);
+        Destroy(Edges);
+    }
+
+    void DrawMap()
+    {
         //Adjust camera with respect to the map's size
         cam.transform.position = new Vector3(map.Width / 2f, -map.Height / 2f, -map.Width);
-        defaultCamSize = map.Height / 2f + 3;
+
+        //Set cam size w.r.t the biggest dimension
+        if (map.Width > map.Height)
+            defaultCamSize = (map.Width / ((float)cam.pixelWidth / cam.pixelHeight)) / 2f + 3;
+        else
+            defaultCamSize = map.Height / 2f + 3;
+
         cam.orthographicSize = defaultCamSize;
 
         //Instantiate Empty Containes for objects
@@ -59,12 +90,12 @@ public class SceneMapDisplay : MonoBehaviour {
             Black, 0, Quaternion.identity,
             MapGameObj);
 
-		//Instantiate prefabs for gridtile
+        //Instantiate prefabs for gridtile
         //i is the y coordinate
-        for(int i = 0; i < map.Tiles.Length; ++i)
+        for (int i = 0; i < map.Tiles.Length; ++i)
         {
             //j is the x coordinate
-            for(int j = 0; j <map.Tiles[i].Length; ++j)
+            for (int j = 0; j < map.Tiles[i].Length; ++j)
             {
                 switch (map.Tiles[i][j])
                 {
@@ -80,8 +111,8 @@ public class SceneMapDisplay : MonoBehaviour {
         }
 
         DrawClusters(0);
-
     }
+
 
     private void DrawClusters(int layer)
     {

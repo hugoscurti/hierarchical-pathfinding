@@ -25,6 +25,12 @@ public class HierarchicalPathfinder : MonoBehaviour
 
     public LinkedList<GridTile> FindPath(Graph graph, GridTile start, GridTile dest, Map map)
     {
+        //1. Add node start to graph (for each level)
+
+        //2. Add node dest to graph (for each level)
+
+        //3. search for path (from highest to lowest level)
+
         throw new NotImplementedException("Function not yet implemented");
     }
 }

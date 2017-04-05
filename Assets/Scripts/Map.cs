@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
-
 
 public class Map
 {
@@ -20,7 +20,16 @@ public class Map
     //TODO: Same as obstacles!
     public char[][] Tiles { get; set; }
 
-    public Map() {}
+
+    private Map() {}
+
+
+    public static List<FileInfo> GetMaps()
+    {
+        string BaseMapDirectory = GetBaseMapDirectory();
+        DirectoryInfo d = new DirectoryInfo(BaseMapDirectory);
+        return new List<FileInfo>(d.GetFiles("*.map"));
+    }
 
     /// <summary>
     /// Loads a map from the base map directory
@@ -28,10 +37,18 @@ public class Map
     /// <param name="MapName">File from which to load the map</param>
     public static Map LoadMap(string MapName)
     {
-        string BaseMapDirectory = Path.Combine(Application.dataPath, "../Maps/map");
+        string BaseMapDirectory = GetBaseMapDirectory();
         FileInfo f = new FileInfo(Path.Combine(BaseMapDirectory, MapName));
 
         return ReadMap(f);
+    }
+
+    /// <summary>
+    /// Gets the base map directory
+    /// </summary>
+    private static string GetBaseMapDirectory()
+    {
+        return Path.Combine(Application.dataPath, "../Maps/map");
     }
 
     /// <summary>
@@ -104,7 +121,7 @@ public class Map
     /// <summary>
     /// Read tiles from the map file, adding tiles and filling obstacles in the array
     /// </summary>
-    static void ReadTiles(StreamReader sr, Map map)
+    private static void ReadTiles(StreamReader sr, Map map)
     {
         char c;
         string line;

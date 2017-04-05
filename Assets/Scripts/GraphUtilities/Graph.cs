@@ -17,7 +17,7 @@ public class Graph
     /// </summary>
     public Graph(Map map, int MaxLevel, int clusterSize)
     {
-        depth = clusterSize;
+        depth = MaxLevel;
         this.map = map;
 
         C = new List<Cluster>[MaxLevel];
@@ -26,6 +26,11 @@ public class Graph
         {
             C[i] = BuildClusters(i, clusterSize);
         }
+    }
+
+    public void InsertNode(Node n, int MaxLevel)
+    {
+        throw new NotImplementedException("Not yet implemented");
     }
 
     /// <summary>
@@ -95,7 +100,7 @@ public class Graph
                 }
             }
 
-            //TODO: Add Intra edges for every border nodes and pathfind between them
+            //Add Intra edges for every border nodes and pathfind between them
             for (i = 0; i < clusters.Count; ++i)
             {
                 GenerateIntraEdges(clusters[i]);
