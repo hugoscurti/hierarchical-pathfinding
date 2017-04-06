@@ -2,14 +2,20 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class MapSelector : MonoBehaviour {
+public class MapController : MonoBehaviour {
 
     public InputField SourceX,
        SourceY,
        DestX,
        DestY;
+
+    public EventSystem eventSys;
+
+    //Bool that says which last gridpoint we set between source and destination
+    private bool sourceSet = false;
 
     public Dropdown MapDdl;
     public InputField ClusterTxt;
@@ -61,6 +67,42 @@ public class MapSelector : MonoBehaviour {
     }
 
     // Update is called once per frame
-    void Update () {
-	}
+    void Update()
+    {
+        if (!EventSystem.current.IsPointerOverGameObject()) {
+            display.HandleZoom();
+            SelectGridPos();
+        }
+    }
+
+    void SelectGridPos()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction, 100f);
+
+            if (hit && hit.collider.tag == "GridTile")
+            {
+                Vector3 localHitPoint = transform.worldToLocalMatrix.MultiplyPoint(hit.point);
+                GridTile pos = new GridTile(localHitPoint);
+
+                if (sourceSet)
+                {
+                    //Set Destination
+                    DestX.text = pos.x.ToString();
+                    DestY.text = pos.y.ToString();
+                }
+                else
+                {
+                    SourceX.text = pos.x.ToString();
+                    SourceY.text = pos.y.ToString();
+                }
+
+                sourceSet = !sourceSet;
+            }
+        }
+    }
+
+
 }

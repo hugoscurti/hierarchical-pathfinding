@@ -9,8 +9,7 @@ public class SceneMapDisplay : MonoBehaviour {
     public Color Black = Color.black;
     public Color White = Color.white;
 
-    //Camera
-    public Camera cam;
+    //Camera related variables
     public float ZoomSpeed;
 
     float defaultCamSize;
@@ -83,15 +82,15 @@ public class SceneMapDisplay : MonoBehaviour {
     void DrawMap()
     {
         //Adjust camera with respect to the map's size
-        cam.transform.position = new Vector3(map.Width / 2f, -map.Height / 2f, -map.Width);
+        Camera.main.transform.position = new Vector3(map.Width / 2f, -map.Height / 2f, -map.Width);
 
         //Set cam size w.r.t the biggest dimension
         if (map.Width > map.Height)
-            defaultCamSize = (map.Width / ((float)cam.pixelWidth / cam.pixelHeight)) / 2f + 3;
+            defaultCamSize = (map.Width / ((float)Camera.main.pixelWidth / Camera.main.pixelHeight)) / 2f + 3;
         else
             defaultCamSize = map.Height / 2f + 3;
 
-        cam.orthographicSize = defaultCamSize;
+        Camera.main.orthographicSize = defaultCamSize;
 
         //Instantiate Empty Containes for objects
         MapGameObj = new GameObject("Map");
@@ -109,6 +108,9 @@ public class SceneMapDisplay : MonoBehaviour {
             new Vector3(map.Width, map.Height, 1),
             Black, 0, Quaternion.identity,
             MapGameObj);
+
+        //Use this object to put collider and detect clicks on the map
+        clone.AddComponent<BoxCollider2D>();
 
         //Instantiate prefabs for gridtile
         //i is the y coordinate
@@ -250,19 +252,18 @@ public class SceneMapDisplay : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        HandleZoom();
     }
 
-    private void HandleZoom()
+    public void HandleZoom()
     {
         float delta = Input.GetAxis("Mouse ScrollWheel");
         if (delta > 0 || delta < 0)
         {
-            cam.orthographicSize += ZoomSpeed * -delta;
+            Camera.main.orthographicSize += ZoomSpeed * -delta;
 
             //Bound cam size
-            if (cam.orthographicSize < 0.1f) cam.orthographicSize = 0.1f;
-            if (cam.orthographicSize > 1000) cam.orthographicSize = 1000;
+            if (Camera.main.orthographicSize < 0.1f) Camera.main.orthographicSize = 0.1f;
+            if (Camera.main.orthographicSize > 1000) Camera.main.orthographicSize = 1000;
         }
     }
 }
