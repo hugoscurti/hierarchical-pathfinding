@@ -9,10 +9,12 @@ public class SceneMapDisplay : MonoBehaviour {
     public Color Black = Color.black;
     public Color White = Color.white;
 
-    //Camera related variables
+    //Camera movement variables
     public float ZoomSpeed;
+    public float MovementSpeed;
 
-    float defaultCamSize;
+    private float defaultCamSize;
+    private Vector3 defaultCamPos;
 
     private Map map;
     private Graph graph;
@@ -28,7 +30,8 @@ public class SceneMapDisplay : MonoBehaviour {
     GameObject Nodes;
     GameObject Edges;
 
-    GameObject Path;
+    GameObject HpaPath;
+    GameObject NormalPath;
 
     void Awake ()
     {
@@ -55,18 +58,31 @@ public class SceneMapDisplay : MonoBehaviour {
     }
 
     //Draw the path formed by the edges
-    public void DrawPath(LinkedList<Edge> path)
+    public void DrawPaths(LinkedList<Edge> HpaPath, LinkedList<GridTile> NormalPath)
     {
-        //Delete old path
-        Destroy(Path);
-        Path = new GameObject("Path");
-        Path.transform.SetParent(transform, false);
+        Destroy(this.HpaPath);
+        this.HpaPath = new GameObject("HPA* Path");
+        this.HpaPath.transform.SetParent(transform, false);
 
-        LinkedListNode<Edge> current = path.First;
-        while(current != null)
+        LinkedListNode<Edge> current = HpaPath.First;
+        while (current != null)
         {
-            DrawEdge(current.Value.start.pos, current.Value.end.pos, Color.red, Path, 4);
+            DrawEdge(current.Value.start.pos, current.Value.end.pos, Color.red, this.HpaPath, 4);
             current = current.Next;
+        }
+
+        Destroy(this.NormalPath);
+        this.NormalPath = new GameObject("A* Path");
+        this.NormalPath.transform.SetParent(transform, false);
+
+
+        GridTile previous = NormalPath.First.Value;
+        LinkedListNode<GridTile> c2 = NormalPath.First.Next;
+        while(c2 != null)
+        {
+            DrawEdge(previous, c2.Value, Color.green, this.NormalPath, 4);
+            previous = c2.Value;
+            c2 = c2.Next;
         }
     }
 
@@ -76,13 +92,13 @@ public class SceneMapDisplay : MonoBehaviour {
         Destroy(Clusters);
         Destroy(Nodes);
         Destroy(Edges);
-        Destroy(Path);
+        Destroy(HpaPath);
     }
 
     void DrawMap()
     {
         //Adjust camera with respect to the map's size
-        Camera.main.transform.position = new Vector3(map.Width / 2f, -map.Height / 2f, -map.Width);
+        defaultCamPos = new Vector3(map.Width / 2f, -map.Height / 2f, -map.Width);
 
         //Set cam size w.r.t the biggest dimension
         if (map.Width > map.Height)
@@ -90,6 +106,7 @@ public class SceneMapDisplay : MonoBehaviour {
         else
             defaultCamSize = map.Height / 2f + 3;
 
+        Camera.main.transform.position = defaultCamPos;
         Camera.main.orthographicSize = defaultCamSize;
 
         //Instantiate Empty Containes for objects
@@ -254,16 +271,40 @@ public class SceneMapDisplay : MonoBehaviour {
 	void Update () {
     }
 
+    public void HandleCameraReset()
+    {
+        if (Input.GetButtonDown("Reset")) {
+            Camera.main.transform.position = defaultCamPos;
+            Camera.main.orthographicSize = defaultCamSize;
+        }
+    }
+
+    public void HandleCameraMove()
+    {
+        //float deltax = Input.GetAxis("Horizontal"),
+        //    deltay = Input.GetAxis("Vertical");
+
+        //if (deltax != 0)
+        //    Camera.main.transform.position += Vector3.right * MovementSpeed * deltax;
+        //if (deltay != 0)
+        //    Camera.main.transform.position += Vector3.up * MovementSpeed * deltay;
+
+        if (Input.GetMouseButton(1))
+        {
+            Camera.main.transform.position += Vector3.left  * Input.GetAxis("Mouse X") * MovementSpeed;
+            Camera.main.transform.position += Vector3.down * Input.GetAxis("Mouse Y") * MovementSpeed;
+        }
+    }
+
     public void HandleZoom()
     {
         float delta = Input.GetAxis("Mouse ScrollWheel");
-        if (delta > 0 || delta < 0)
+        if (delta != 0)
         {
             Camera.main.orthographicSize += ZoomSpeed * -delta;
 
             //Bound cam size
             if (Camera.main.orthographicSize < 0.1f) Camera.main.orthographicSize = 0.1f;
-            if (Camera.main.orthographicSize > 1000) Camera.main.orthographicSize = 1000;
         }
     }
 }

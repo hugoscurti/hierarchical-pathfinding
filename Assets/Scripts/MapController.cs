@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -26,6 +27,7 @@ public class MapController : MonoBehaviour {
     private SceneMapDisplay display;
     private HierarchicalPathfinder hpa;
 
+    private Map map;
     private Graph graph;
 
 	// Use this for initialization
@@ -35,6 +37,9 @@ public class MapController : MonoBehaviour {
 
         //Populate list of maps
         maps = Map.GetMaps();
+
+        //Highlight tile being selected
+        HighlightPositionSelector();
 
         foreach (FileInfo f in maps)
             MapDdl.options.Add(new Dropdown.OptionData(f.Name));
@@ -51,7 +56,7 @@ public class MapController : MonoBehaviour {
         int ClusterSize = int.Parse(ClusterTxt.text);
         int LayerDepth = int.Parse(LayerTxt.text);
 
-        Map map = Map.LoadMap(current.FullName);
+        map = Map.LoadMap(current.FullName);
         graph = display.SetMap(map, ClusterSize, LayerDepth);
     }
 
@@ -60,10 +65,12 @@ public class MapController : MonoBehaviour {
         GridTile start = new GridTile(int.Parse(SourceX.text), int.Parse(SourceY.text));
         GridTile dest = new GridTile(int.Parse(DestX.text), int.Parse(DestY.text));
 
-        LinkedList<Edge> res = hpa.FindPath(graph, start, dest);
+        //TODO: measure time taken and show it?
+        LinkedList<Edge> hpaRes = hpa.FindPath(graph, start, dest);
+        LinkedList<GridTile> aStarRes = Pathfinder.FindPath(start, dest, map.Boundaries, map.Obstacles);
 
         //Display the result
-        display.DrawPath(res);
+        display.DrawPaths(hpaRes, aStarRes);
     }
 
     // Update is called once per frame
@@ -71,6 +78,9 @@ public class MapController : MonoBehaviour {
     {
         if (!EventSystem.current.IsPointerOverGameObject()) {
             display.HandleZoom();
+            display.HandleCameraMove();
+            display.HandleCameraReset();
+
             SelectGridPos();
         }
     }
@@ -87,6 +97,13 @@ public class MapController : MonoBehaviour {
                 Vector3 localHitPoint = transform.worldToLocalMatrix.MultiplyPoint(hit.point);
                 GridTile pos = new GridTile(localHitPoint);
 
+                //Be sure that it's a valid position
+                if (map.Obstacles[pos.y][pos.x])
+                {
+                    EditorUtility.DisplayDialog("Info", "You cannot select a tile marked as an obstacle.", "Ok");
+                    return;
+                }
+
                 if (sourceSet)
                 {
                     //Set Destination
@@ -100,8 +117,15 @@ public class MapController : MonoBehaviour {
                 }
 
                 sourceSet = !sourceSet;
+                HighlightPositionSelector();
             }
         }
+    }
+
+    void HighlightPositionSelector()
+    {
+        SourceX.transform.parent.GetComponent<Image>().enabled = !sourceSet;
+        DestX.transform.parent.GetComponent<Image>().enabled = sourceSet;
     }
 
 
