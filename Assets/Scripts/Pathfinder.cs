@@ -2,14 +2,21 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+
 public class Pathfinder {
+    private static float SQRT2 = Mathf.Sqrt(2f);
 
     //Offset used to get neighbours of a cell (in manhattan setup)
-    static GridTile[] neighbours = {
-        new GridTile(-1, 0),
-        new GridTile(1, 0),
-        new GridTile(0, -1),
-        new GridTile(0, 1)
+    static KeyValuePair<GridTile, float>[] neighbours = {
+        new KeyValuePair<GridTile, float>(new GridTile(-1, 0), 1f),
+        new KeyValuePair<GridTile, float>(new GridTile(1, 0), 1f),
+        new KeyValuePair<GridTile, float>(new GridTile(0, -1), 1f),
+        new KeyValuePair<GridTile, float>(new GridTile(0, 1), 1f),
+        //Diagonal movements
+        new KeyValuePair<GridTile, float>(new GridTile(-1,-1), SQRT2),
+        new KeyValuePair<GridTile, float>(new GridTile(-1, 1), SQRT2),
+        new KeyValuePair<GridTile, float>(new GridTile( 1, 1), SQRT2),
+        new KeyValuePair<GridTile, float>(new GridTile( 1,-1), SQRT2)
     };
 
     private static int EuclidianDistanceSquared(Node node1, Node node2)
@@ -70,13 +77,10 @@ public class Pathfinder {
             }
         }
         
-        //If we go through here that means we didn't find a path
-        Debug.Log("Can't reach the node specified");
         return new LinkedList<Edge>();
     }
 
-    //TODO: Handle diagonal movements?
-    public static LinkedList<GridTile> FindPath(GridTile start, GridTile dest, Boundaries boundaries, bool[][] obstacles)
+    public static LinkedList<Edge> FindPath(GridTile start, GridTile dest, Boundaries boundaries, bool[][] obstacles)
     {
         Dictionary<GridTile, bool> Visited = new Dictionary<GridTile, bool>();
         Dictionary<GridTile, GridTile> Parent = new Dictionary<GridTile, GridTile>();
@@ -96,15 +100,15 @@ public class Pathfinder {
             current = pq.Dequeue();
             if (current.Equals(dest))
                 //Rebuild path
-                return RebuildPath(Parent, dest);
+                return RebuildPath(Parent, gScore, dest);
 
             Visited[current] = true;
 
             //Visit all neighbours of current
-            foreach (GridTile offsetNeighbour in neighbours)
+            foreach (KeyValuePair<GridTile,float> offset in neighbours)
             {
-                neighbour.x = current.x + offsetNeighbour.x;
-                neighbour.y = current.y + offsetNeighbour.y;
+                neighbour.x = current.x + offset.Key.x;
+                neighbour.y = current.y + offset.Key.y;
 
                 //Check if neighbour is an Obstacles
                 //Check if neighbour is outside of the boundaries specified
@@ -115,7 +119,7 @@ public class Pathfinder {
                 if (Visited.ContainsKey(neighbour))
                     continue;
 
-                temp_gCost = gScore[current] + 1;
+                temp_gCost = gScore[current] + offset.Value;
 
                 //If new value is not better then do nothing
                 if (gScore.TryGetValue(neighbour, out prev_gCost) && temp_gCost >= prev_gCost)
@@ -130,8 +134,7 @@ public class Pathfinder {
             }
         }
 
-        Debug.Log("Can't reach the node specified");
-        return new LinkedList<GridTile>();
+        return new LinkedList<Edge>();
     }
 
     private static bool IsOutOfGrid(GridTile pos, Boundaries boundaries)
@@ -140,15 +143,31 @@ public class Pathfinder {
                (pos.y < boundaries.Min.y || pos.y > boundaries.Max.y);
     }
 
-    //Rebuild of grid tiles
-    private static LinkedList<GridTile> RebuildPath(Dictionary<GridTile, GridTile> Parent, GridTile dest)
+    //Rebuild path with edges
+    private static LinkedList<Edge> RebuildPath(Dictionary<GridTile, GridTile> Parent, Dictionary<GridTile, float> cost, GridTile dest)
     {
-        LinkedList<GridTile> res = new LinkedList<GridTile>();
+        LinkedList<Edge> res = new LinkedList<Edge>();
+        float currentCost = cost[dest];
+        float edgeCost;
+        Edge e;
+        Node currNode = new Node(dest);
+        Node prevNode;
+        GridTile previous = Parent[dest];
 
-        GridTile current = dest;
         do {
-            res.AddFirst(current);
-        } while (Parent.TryGetValue(current, out current));
+            prevNode = new Node(previous);
+            edgeCost = currentCost - cost[previous];
+
+            e = new Edge() { start = prevNode, end = currNode, type = EdgeType.INTER, weight = edgeCost };
+            prevNode.edges.Add(e); //This might not be necessary. Just for consistency
+
+            res.AddFirst(e);
+
+            //Update the current value
+            currNode = prevNode;
+            currentCost -= edgeCost;
+            
+        } while (Parent.TryGetValue(previous, out previous));
 
         return res;
     }

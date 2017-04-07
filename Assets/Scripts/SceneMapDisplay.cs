@@ -58,7 +58,7 @@ public class SceneMapDisplay : MonoBehaviour {
     }
 
     //Draw the path formed by the edges
-    public void DrawPaths(LinkedList<Edge> HpaPath, LinkedList<GridTile> NormalPath)
+    public void DrawPaths(LinkedList<Edge> HpaPath, LinkedList<Edge> NormalPath)
     {
         Destroy(this.HpaPath);
         this.HpaPath = new GameObject("HPA* Path");
@@ -76,13 +76,11 @@ public class SceneMapDisplay : MonoBehaviour {
         this.NormalPath.transform.SetParent(transform, false);
 
 
-        GridTile previous = NormalPath.First.Value;
-        LinkedListNode<GridTile> c2 = NormalPath.First.Next;
-        while(c2 != null)
+        current = NormalPath.First;
+        while(current != null)
         {
-            DrawEdge(previous, c2.Value, Color.green, this.NormalPath, 4);
-            previous = c2.Value;
-            c2 = c2.Next;
+            DrawEdge(current.Value.start.pos, current.Value.end.pos, Color.green, this.NormalPath, 4);
+            current = current.Next;
         }
     }
 
@@ -93,6 +91,7 @@ public class SceneMapDisplay : MonoBehaviour {
         Destroy(Nodes);
         Destroy(Edges);
         Destroy(HpaPath);
+        Destroy(NormalPath);
     }
 
     void DrawMap()

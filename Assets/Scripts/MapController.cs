@@ -67,7 +67,7 @@ public class MapController : MonoBehaviour {
 
         //TODO: measure time taken and show it?
         LinkedList<Edge> hpaRes = hpa.FindPath(graph, start, dest);
-        LinkedList<GridTile> aStarRes = Pathfinder.FindPath(start, dest, map.Boundaries, map.Obstacles);
+        LinkedList<Edge> aStarRes = Pathfinder.FindPath(start, dest, map.Boundaries, map.Obstacles);
 
         //Display the result
         display.DrawPaths(hpaRes, aStarRes);

@@ -8,8 +8,7 @@ public class Edge
     public EdgeType type;
     public float weight;
 
-    //TODO: Think about how to represent higher level edges with higher level GridTiles ?
-    public LinkedList<GridTile> UnderlyingPath;
+    public LinkedList<Edge> UnderlyingPath;
 }
 
 

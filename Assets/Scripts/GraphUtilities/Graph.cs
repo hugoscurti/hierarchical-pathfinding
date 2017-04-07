@@ -79,20 +79,20 @@ public class Graph
     /// <remarks>We assume they are different nodes. If the path returned is 0, then there is no path that connects them.</remarks>
     private void ConnectNodes(Node n1, Node n2, Cluster c)
     {
-        LinkedList<GridTile> path;
-        LinkedListNode<GridTile> iter;
+        LinkedList<Edge> path;
+        LinkedListNode<Edge> iter;
         Edge e1, e2;
+
+        float weight = 0f;
 
         path = Pathfinder.FindPath(n1.pos, n2.pos, c.Boundaries, map.Obstacles);
         if (path.Count > 0)
         {
-            //TODO: use weights instead of count for higher levels of abstraction
             e1 = new Edge()
             {
                 start = n1,
                 end = n2,
                 type = EdgeType.INTRA,
-                weight = path.Count - 1,
                 UnderlyingPath = path
             };
 
@@ -101,17 +101,22 @@ public class Graph
                 start = n2,
                 end = n1,
                 type = EdgeType.INTRA,
-                weight = e1.weight,
-                UnderlyingPath = new LinkedList<GridTile>()
+                UnderlyingPath = new LinkedList<Edge>()
             };
 
             //Store inverse path in node n2
+            //Sum weights of underlying edges at the same time
             iter = e1.UnderlyingPath.Last;
             while (iter != null)
             {
                 e2.UnderlyingPath.AddLast(iter.Value);
+                weight += iter.Value.weight;
                 iter = iter.Previous;
             }
+
+            //Update weights
+            e1.weight = weight;
+            e2.weight = weight;
 
             n1.edges.Add(e1);
             n2.edges.Add(e2);
