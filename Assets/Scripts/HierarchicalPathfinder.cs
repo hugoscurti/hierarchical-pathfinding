@@ -1,27 +1,15 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
 
-public class HierarchicalPathfinder : MonoBehaviour
+public class HierarchicalPathfinder
 {
-    // Use this for initialization
-    void Start()
+
+    public static LinkedList<Edge> FindPath(Graph graph, GridTile start, GridTile dest)
     {
-        //map = Map.LoadMap("arena.map");
+        //TODO: find first level where start and end are not in the same clusters
+        // If they are always in the same cluster, then simply pathfind through them
 
-        //Graph g = new Graph(map, 1, 10);
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
-
-    public LinkedList<Edge> FindPath(Graph graph, GridTile start, GridTile dest)
-    {
         //1. Add node start to graph (for each level)
         Node[] nStart = graph.InsertNode(start, graph.depth);
 

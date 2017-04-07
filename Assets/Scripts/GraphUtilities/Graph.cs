@@ -42,7 +42,6 @@ public class Graph
                 {
                     //This is the right cluster
                     layerNodes[i] = ConnectToBorder(pos, c, i);
-                    //TODO: Add the node in the cluster?
                     break;
                 }
             }

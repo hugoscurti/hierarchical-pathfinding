@@ -1,85 +1,84 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.UI;
 
 public class MapController : MonoBehaviour {
 
-    public InputField SourceX,
-       SourceY,
-       DestX,
-       DestY;
-
     public EventSystem eventSys;
-
-    //Bool that says which last gridpoint we set between source and destination
-    private bool sourceSet = false;
-
-    public Dropdown MapDdl;
-    public InputField ClusterTxt;
-    public InputField LayerTxt;
 
     private List<FileInfo> maps;
 
-    private SceneMapDisplay display;
-    private HierarchicalPathfinder hpa;
+    private SceneMapDisplay mapDisplay;
+    private UIController uiCtrl;
 
     private Map map;
     private Graph graph;
 
 	// Use this for initialization
 	void Start () {
-        display = GetComponent<SceneMapDisplay>();
-        hpa = GetComponent<HierarchicalPathfinder>();
+        mapDisplay = GetComponent<SceneMapDisplay>();
+        uiCtrl = GetComponent<UIController>();
 
         //Populate list of maps
         maps = Map.GetMaps();
-
-        //Highlight tile being selected
-        HighlightPositionSelector();
-
-        foreach (FileInfo f in maps)
-            MapDdl.options.Add(new Dropdown.OptionData(f.Name));
-
-        //Selects first
-        MapDdl.value = 0;
-        MapDdl.RefreshShownValue();
+        uiCtrl.FillMaps(maps.Select((FileInfo f) => f.Name).ToList());
 	}
-
 
     public void LoadMap()
     {
-        FileInfo current = maps[MapDdl.value];
-        int ClusterSize = int.Parse(ClusterTxt.text);
-        int LayerDepth = int.Parse(LayerTxt.text);
+        FileInfo current = maps[uiCtrl.DdlMaps.value];
+        int ClusterSize = uiCtrl.Cluster.GetValue();
+        int LayerDepth = uiCtrl.Layers.GetValue();
+        float before, after;
 
         map = Map.LoadMap(current.FullName);
-        graph = display.SetMap(map, ClusterSize, LayerDepth);
+
+        before = Time.realtimeSinceStartup;
+        graph = new Graph(map, LayerDepth, ClusterSize);
+        after = Time.realtimeSinceStartup;
+        uiCtrl.ClusterTime.text = string.Format("{0} s", after - before);
+
+        mapDisplay.SetMap(map, graph);
     }
 
     public void FindPath()
     {
-        GridTile start = new GridTile(int.Parse(SourceX.text), int.Parse(SourceY.text));
-        GridTile dest = new GridTile(int.Parse(DestX.text), int.Parse(DestY.text));
+        GridTile start = uiCtrl.Source.GetPositionField();
+        GridTile dest = uiCtrl.Destination.GetPositionField();
 
-        //TODO: measure time taken and show it?
-        LinkedList<Edge> hpaRes = hpa.FindPath(graph, start, dest);
+        float before, after;
+
+        before = Time.realtimeSinceStartup;
+        LinkedList<Edge> hpaRes = HierarchicalPathfinder.FindPath(graph, start, dest);
+        after = Time.realtimeSinceStartup;
+        uiCtrl.HPAStarTime.text = string.Format("{0} s", after - before);
+
+        before = Time.realtimeSinceStartup;
         LinkedList<Edge> aStarRes = Pathfinder.FindPath(start, dest, map.Boundaries, map.Obstacles);
+        after = Time.realtimeSinceStartup;
+        uiCtrl.AStarTime.text = string.Format("{0} s", after - before);
 
         //Display the result
-        display.DrawPaths(hpaRes, aStarRes);
+        mapDisplay.DrawPaths(hpaRes, aStarRes);
+    }
+
+
+    public void Benchmark()
+    {
+        throw new System.NotImplementedException("Function not yet implemented");
     }
 
     // Update is called once per frame
     void Update()
     {
         if (!EventSystem.current.IsPointerOverGameObject()) {
-            display.HandleZoom();
-            display.HandleCameraMove();
-            display.HandleCameraReset();
+            mapDisplay.HandleZoom();
+            mapDisplay.HandleCameraMove();
+            mapDisplay.HandleCameraReset();
 
             SelectGridPos();
         }
@@ -104,29 +103,8 @@ public class MapController : MonoBehaviour {
                     return;
                 }
 
-                if (sourceSet)
-                {
-                    //Set Destination
-                    DestX.text = pos.x.ToString();
-                    DestY.text = pos.y.ToString();
-                }
-                else
-                {
-                    SourceX.text = pos.x.ToString();
-                    SourceY.text = pos.y.ToString();
-                }
-
-                sourceSet = !sourceSet;
-                HighlightPositionSelector();
+                uiCtrl.SetPosition(pos);
             }
         }
     }
-
-    void HighlightPositionSelector()
-    {
-        SourceX.transform.parent.GetComponent<Image>().enabled = !sourceSet;
-        DestX.transform.parent.GetComponent<Image>().enabled = sourceSet;
-    }
-
-
 }

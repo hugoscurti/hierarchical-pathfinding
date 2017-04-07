@@ -16,9 +16,6 @@ public class SceneMapDisplay : MonoBehaviour {
     private float defaultCamSize;
     private Vector3 defaultCamPos;
 
-    private Map map;
-    private Graph graph;
-
     //Variables to draw in scene
     public GameObject Tile2d;
     GameObject clone;
@@ -43,18 +40,12 @@ public class SceneMapDisplay : MonoBehaviour {
     }
 
 
-    public Graph SetMap(Map map, int ClusterSize, int LayerDepth)
+    public void SetMap(Map map, Graph graph)
     {
+        //Delete previous map's game objects
         Delete();
 
-        //Delete previous map's game objects
-        this.map = map;
-
-        graph = new Graph(map, LayerDepth, ClusterSize);
-
-        DrawMap();
-
-        return graph;
+        DrawMap(map, graph);
     }
 
     //Draw the path formed by the edges
@@ -94,7 +85,7 @@ public class SceneMapDisplay : MonoBehaviour {
         Destroy(NormalPath);
     }
 
-    void DrawMap()
+    void DrawMap(Map map, Graph graph)
     {
         //Adjust camera with respect to the map's size
         defaultCamPos = new Vector3(map.Width / 2f, -map.Height / 2f, -map.Width);
@@ -148,18 +139,18 @@ public class SceneMapDisplay : MonoBehaviour {
             }
         }
 
-        DrawClusters(0);
+        DrawClusters(map, graph.C[0]);
     }
 
 
-    private void DrawClusters(int layer)
+    private void DrawClusters(Map map, List<Cluster> clusters)
     {
         HashSet<GridTile> Visited = new HashSet<GridTile>();
 
-        foreach (Cluster c in graph.C[layer])
+        foreach (Cluster c in clusters)
         {
             //1. Draw borders
-            DrawBorder(c);
+            DrawBorder(map, c);
 
             //2. Draw edges
             foreach (KeyValuePair<GridTile, Node> node in c.Nodes)
@@ -182,7 +173,7 @@ public class SceneMapDisplay : MonoBehaviour {
         }
     }
 
-    private void DrawBorder(Cluster c)
+    private void DrawBorder(Map map, Cluster c)
     {
         Vector3 pos = new Vector3() { z = 1 };
         Vector3 scale = new Vector3() { z = 1 };
