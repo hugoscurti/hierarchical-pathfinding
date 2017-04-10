@@ -33,16 +33,82 @@ public class MapController : MonoBehaviour {
         FileInfo current = maps[uiCtrl.DdlMaps.value];
         int ClusterSize = uiCtrl.Cluster.GetValue();
         int LayerDepth = uiCtrl.Layers.GetValue();
-        float before, after;
 
         map = Map.LoadMap(current.FullName);
+
+        float deltaT;
+        graph = RunGenerateGraph(LayerDepth, ClusterSize, out deltaT);
+        uiCtrl.ClusterTime.text = string.Format("{0} s", deltaT);
+
+        mapDisplay.SetMap(map, graph);
+
+        //TODO: Populate layer select dropdown
+    }
+
+
+    private Graph RunGenerateGraph(int LayerDepth, int ClusterSize, out float deltatime) {
+        float before, after;
 
         before = Time.realtimeSinceStartup;
         graph = new Graph(map, LayerDepth, ClusterSize);
         after = Time.realtimeSinceStartup;
-        uiCtrl.ClusterTime.text = string.Format("{0} s", after - before);
 
-        mapDisplay.SetMap(map, graph);
+        deltatime = after - before;
+        return graph;
+    }
+
+    private TestResult RunPathfind(GridTile start, GridTile dest)
+    {
+        float before, after;
+        TestResult result = new TestResult();
+
+        PathfindResult res = new PathfindResult();
+        before = Time.realtimeSinceStartup;
+        res.Path = HierarchicalPathfinder.FindPath(graph, start, dest);
+        after = Time.realtimeSinceStartup;
+
+        res.RunningTime = after - before;
+        res.CalculatePathLength();
+        result.HPAStarResult = res;
+
+        res = new PathfindResult();
+        before = Time.realtimeSinceStartup;
+        res.Path = Pathfinder.FindPath(start, dest, map.Boundaries, map.Obstacles);
+        after = Time.realtimeSinceStartup;
+
+        res.RunningTime = after - before;
+        res.CalculatePathLength();
+        result.AStarResult = res;
+
+        return result;
+    }
+
+    public void RunBenchmark()
+    {
+        FileInfo current = maps[uiCtrl.DdlMaps.value];
+
+        TestResults results = new TestResults()
+        {
+            MapName = current.Name,
+            ClusterSize = uiCtrl.Cluster.GetValue(),
+            Layers = uiCtrl.Layers.GetValue()
+        };
+
+        map = Map.LoadMap(current.FullName);
+        graph = RunGenerateGraph(results.Layers, results.ClusterSize, out results.GenerateClusterTime);
+
+        List<TestCase> testcases = Benchmark.LoadTestCases(current.Name);
+        
+        TestResult res;
+        foreach (TestCase testcase in testcases)
+        {
+            res = RunPathfind(testcase.Start, testcase.destination);
+            res.GroupingNumber = testcase.GroupingNumber;
+            results.results.Add(res);
+        }
+
+        //Write results in file
+        Benchmark.WriteResults(results);
     }
 
     public void FindPath()
@@ -50,27 +116,16 @@ public class MapController : MonoBehaviour {
         GridTile start = uiCtrl.Source.GetPositionField();
         GridTile dest = uiCtrl.Destination.GetPositionField();
 
-        float before, after;
+        TestResult res = RunPathfind(start, dest);
 
-        before = Time.realtimeSinceStartup;
-        LinkedList<Edge> hpaRes = HierarchicalPathfinder.FindPath(graph, start, dest);
-        after = Time.realtimeSinceStartup;
-        uiCtrl.HPAStarTime.text = string.Format("{0} s", after - before);
-
-        before = Time.realtimeSinceStartup;
-        LinkedList<Edge> aStarRes = Pathfinder.FindPath(start, dest, map.Boundaries, map.Obstacles);
-        after = Time.realtimeSinceStartup;
-        uiCtrl.AStarTime.text = string.Format("{0} s", after - before);
+        uiCtrl.HPAStarTime.text = string.Format("{0} s", res.HPAStarResult.RunningTime);
+        
+        uiCtrl.AStarTime.text = string.Format("{0} s", res.AStarResult.RunningTime);
 
         //Display the result
-        mapDisplay.DrawPaths(hpaRes, aStarRes);
+        mapDisplay.DrawPaths(res.HPAStarResult.Path, res.AStarResult.Path);
     }
 
-
-    public void Benchmark()
-    {
-        throw new System.NotImplementedException("Function not yet implemented");
-    }
 
     // Update is called once per frame
     void Update()
