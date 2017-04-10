@@ -46,28 +46,90 @@ public class Graph
         }
     }
 
-    public Node[] InsertNode(GridTile pos)
+    /// <summary>
+    /// Insert start and dest nodes in graph in all layers
+    /// </summary>
+    public void InsertNodes(GridTile start, GridTile dest, out Node nStart, out Node nDest)
     {
-        Node[] layerNodes = new Node[depth];
-        for(int i = 0; i < depth; ++i)
+        Cluster cStart, cDest;
+        Node newStart, newDest;
+        nStart = null;
+        nDest = null;
+
+        for (int i = 0; i < depth; ++i)
         {
-            //Determine in which cluster should we add it
-            //TODO: Potentially find a better way to find the right cluster
+            cStart = null;
+            cDest = null;
             foreach (Cluster c in C[i])
             {
-                if (c.Contains(pos))
-                {
-                    //This is the right cluster
-                    if (i == 0)
-                        layerNodes[i] = ConnectToBorder(pos, c, false);
-                    else
-                        layerNodes[i] = ConnectToBorder(pos, c, true, layerNodes[i - 1]);
+                if (c.Contains(start))
+                    cStart = c;
+
+                if (c.Contains(dest))
+                    cDest = c;
+
+                if (cStart != null && cDest != null)
                     break;
+            }
+
+            //This is the right cluster
+            if (i == 0)
+            {
+                if (cStart == cDest)
+                {
+                    //Don't connect them to borders
+                    nStart = new Node(start);
+                    nDest = new Node(dest);
+                    ConnectNodes(nStart, nDest, cStart, false);
+                    continue;
                 }
+                nStart = ConnectToBorder(start, cStart, false);
+                nDest = ConnectToBorder(dest, cDest, false);
+            }
+            else
+            {
+                if (cStart == cDest)
+                {
+                    newStart = new Node(start);
+                    newDest = new Node(dest);
+                    ConnectNodes(newStart, newDest, cStart, true);
+                    newStart.child = nStart;
+                    newDest.child = nDest;
+
+                    nStart = newStart;
+                    nDest = newDest;
+                    continue;
+                }
+                nStart = ConnectToBorder(start, cStart, true, nStart);
+                nDest = ConnectToBorder(dest, cDest, true, nDest);
             }
         }
+    }
 
-        return layerNodes;
+    /// <summary>
+    /// Remove nodes from the graph, including all underlying edges
+    /// </summary>
+    public void RemoveNodes(Node start, Node dest)
+    {
+        //Remove everything that connects to start
+        RemoveNode(start);
+
+        //Remove everything that connects to end
+        RemoveNode(dest);
+    }
+
+    //Remove everything that connects to n, going into its children
+    private void RemoveNode(Node n)
+    {
+        Node current = n;
+        while (current != null)
+        {
+            foreach (Edge e in current.edges)
+                //Find an edge in current.end where the end is the this node
+                e.end.edges.RemoveAll((ee) => ee.end == n);
+
+            current = current.child;
+        }
     }
 
     /// <summary>

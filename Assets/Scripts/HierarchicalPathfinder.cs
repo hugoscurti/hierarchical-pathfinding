@@ -7,17 +7,19 @@ public class HierarchicalPathfinder
 
     public static LinkedList<Edge> FindPath(Graph graph, GridTile start, GridTile dest)
     {
-        //TODO: find first level where start and end are not in the same clusters
-        // If they are always in the same cluster, then simply pathfind through them
+        Node nStart, nDest;
 
-        //1. Add node start to graph (for each level)
-        Node[] nStart = graph.InsertNode(start);
+        //1. Insert nodes
+        graph.InsertNodes(start, dest, out nStart, out nDest);
 
-        //2. Add node dest to graph (for each level)
-        Node[] nDest = graph.InsertNode(dest);
+        LinkedList<Edge> path;
+        //2. search for path in the highest level
+        path = Pathfinder.FindPath(nStart, nDest);
 
-        //3. search for path in the highest level
-        LinkedList<Edge> path = Pathfinder.FindPath(nStart[graph.depth - 1], nDest[graph.depth - 1]);
+
+        //3. Remove all created nodes from the graph
+        graph.RemoveNodes(nStart, nDest);
+
         return path;
     }
 }
