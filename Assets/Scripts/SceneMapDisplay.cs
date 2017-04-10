@@ -85,6 +85,15 @@ public class SceneMapDisplay : MonoBehaviour {
         Destroy(NormalPath);
     }
 
+    void DeleteClusters()
+    {
+        Destroy(Clusters);
+        Destroy(Nodes);
+        Destroy(Edges);
+        Destroy(HpaPath);
+        Destroy(NormalPath);
+    }
+
     void DrawMap(Map map, Graph graph)
     {
         //Adjust camera with respect to the map's size
@@ -102,12 +111,6 @@ public class SceneMapDisplay : MonoBehaviour {
         //Instantiate Empty Containes for objects
         MapGameObj = new GameObject("Map");
         MapGameObj.transform.SetParent(transform, false);
-        Clusters = new GameObject("Clusters");
-        Clusters.transform.SetParent(transform, false);
-        Nodes = new GameObject("Nodes");
-        Nodes.transform.SetParent(transform, false);
-        Edges = new GameObject("Edges");
-        Edges.transform.SetParent(transform, false);
 
         //Instantiate huge sprite for background (including out of maps nodes @)
         DrawSprite(
@@ -138,14 +141,24 @@ public class SceneMapDisplay : MonoBehaviour {
                 }
             }
         }
-
-        DrawClusters(map, graph.C[0]);
     }
 
 
-    private void DrawClusters(Map map, List<Cluster> clusters)
+    public void DrawClusters(Map map, List<Cluster> clusters)
     {
         HashSet<GridTile> Visited = new HashSet<GridTile>();
+
+        DeleteClusters();
+
+        //In case we draw level 0 (no clusters)
+        if (clusters == null) return;
+
+        Clusters = new GameObject("Clusters");
+        Clusters.transform.SetParent(transform, false);
+        Nodes = new GameObject("Nodes");
+        Nodes.transform.SetParent(transform, false);
+        Edges = new GameObject("Edges");
+        Edges.transform.SetParent(transform, false);
 
         foreach (Cluster c in clusters)
         {

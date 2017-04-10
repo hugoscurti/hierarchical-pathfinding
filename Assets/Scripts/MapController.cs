@@ -40,9 +40,16 @@ public class MapController : MonoBehaviour {
         graph = RunGenerateGraph(LayerDepth, ClusterSize, out deltaT);
         uiCtrl.ClusterTime.text = string.Format("{0} s", deltaT);
 
+        uiCtrl.FillLayers(graph.depth);
+
         mapDisplay.SetMap(map, graph);
 
-        //TODO: Populate layer select dropdown
+        //Automatically draw the last layer when we load a new map
+        if (graph.depth == 0)
+            mapDisplay.DrawClusters(map, null);
+        else
+            mapDisplay.DrawClusters(map, graph.C[graph.depth - 1]);
+
     }
 
 
@@ -126,6 +133,21 @@ public class MapController : MonoBehaviour {
         mapDisplay.DrawPaths(res.HPAStarResult.Path, res.AStarResult.Path);
     }
 
+
+    public void OnLayerChange()
+    {
+        int layer = uiCtrl.DdlLayers.value;
+
+        if (layer == 0)
+        {
+            mapDisplay.DrawClusters(map, null);
+        } else
+        {
+            mapDisplay.DrawClusters(map, graph.C[layer - 1]);
+        }
+
+        //TODO: Draw resulted path corresponding to the layer selected, if we did pathfind
+    }
 
     // Update is called once per frame
     void Update()

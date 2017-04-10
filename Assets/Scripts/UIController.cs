@@ -13,6 +13,7 @@ public class UIController : MonoBehaviour {
     public IntegerField Layers;
 
     public Dropdown DdlMaps;
+    public Dropdown DdlLayers;
 
     public Text ClusterTime;
     public Text HPAStarTime;
@@ -54,6 +55,19 @@ public class UIController : MonoBehaviour {
         DdlMaps.value = 0;
         DdlMaps.RefreshShownValue();
     }
+
+    public void FillLayers(int MaxLayer)
+    {
+        DdlLayers.ClearOptions();
+        for(int i = 0; i <= MaxLayer; ++i)
+        {
+            DdlLayers.options.Add(new Dropdown.OptionData(i.ToString()));
+        }
+
+        DdlLayers.value = MaxLayer;
+        DdlLayers.RefreshShownValue();
+    }
+
 }
 
 [Serializable()]
