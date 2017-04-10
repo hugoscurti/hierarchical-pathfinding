@@ -111,7 +111,7 @@ public class Map
     /// </summary>
     private static int ReadIntegerValue(StreamReader sr, string key)
     {
-        string[] block = sr.ReadLine().Split(' ');
+        string[] block = sr.ReadLine().Split(null);
         if(block[0] != key) throw new Exception(
                 string.Format("Invalid format. Expected: {0}, Actual: {1}", key, block[0]));
 
