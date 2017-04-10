@@ -5,6 +5,7 @@ public class Node
 {
     public GridTile pos;
     public List<Edge> edges;
+    public Node child;
 
     public Node(GridTile value)
     {

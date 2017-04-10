@@ -20,28 +20,48 @@ public class Graph
         depth = MaxLevel;
         this.map = map;
 
+        int ClusterWidth, ClusterHeight;
+
         C = new List<Cluster>[MaxLevel];
-        
+
         for (int i = 0; i < MaxLevel; ++i)
         {
-            C[i] = BuildClusters(i, clusterSize);
+            if (i != 0)
+                //Increment cluster size for higher levels
+                clusterSize = clusterSize*3;    //Scaling factor 3 is arbitrary
+
+            //Set number of clusters in horizontal and vertical direction
+            ClusterHeight = Mathf.CeilToInt((float)map.Height / clusterSize);
+            ClusterWidth = Mathf.CeilToInt((float)map.Width / clusterSize);
+
+            if (ClusterWidth <= 1 && ClusterHeight <= 1)
+            {
+                /**A ClusterWidth or ClusterHeight of 1 means there is only going to be 
+                 * one cluster in this direction. Therefore if both are 1 then this level is useless **/
+                depth = i;
+                break;
+            }
+
+            C[i] = BuildClusters(i, clusterSize, ClusterWidth, ClusterHeight);
         }
     }
 
-    public Node[] InsertNode(GridTile pos, int MaxLevel)
+    public Node[] InsertNode(GridTile pos)
     {
-        Node[] layerNodes = new Node[MaxLevel];
-        for(int i = 0; i < MaxLevel; ++i)
+        Node[] layerNodes = new Node[depth];
+        for(int i = 0; i < depth; ++i)
         {
             //Determine in which cluster should we add it
             //TODO: Potentially find a better way to find the right cluster
             foreach (Cluster c in C[i])
             {
-                if (c.Boundaries.Min.x <= pos.x && c.Boundaries.Min.y <= pos.y &&
-                    c.Boundaries.Max.x >= pos.x && c.Boundaries.Max.y >= pos.y)
+                if (c.Contains(pos))
                 {
                     //This is the right cluster
-                    layerNodes[i] = ConnectToBorder(pos, c, i);
+                    if (i == 0)
+                        layerNodes[i] = ConnectToBorder(pos, c, false);
+                    else
+                        layerNodes[i] = ConnectToBorder(pos, c, true, layerNodes[i - 1]);
                     break;
                 }
             }
@@ -54,7 +74,7 @@ public class Graph
     /// Connect the grid tile to borders by creating a new node
     /// </summary>
     /// <returns>The node created</returns>
-    private Node ConnectToBorder(GridTile pos, Cluster c, int level)
+    private Node ConnectToBorder(GridTile pos, Cluster c, bool isAbstract, Node child = null)
     {
         Node newNode;
 
@@ -64,9 +84,11 @@ public class Graph
 
         //Otherwise create a node and pathfind through border nodes
         newNode = new Node(pos);
+        if (isAbstract) newNode.child = child;
+
         foreach (KeyValuePair<GridTile, Node> n in c.Nodes)
         {
-            ConnectNodes(newNode, n.Value, c);
+            ConnectNodes(newNode, n.Value, c, isAbstract);
         }
 
         return newNode;
@@ -76,7 +98,7 @@ public class Graph
     /// Connect two nodes by pathfinding between them. 
     /// </summary>
     /// <remarks>We assume they are different nodes. If the path returned is 0, then there is no path that connects them.</remarks>
-    private void ConnectNodes(Node n1, Node n2, Cluster c)
+    private void ConnectNodes(Node n1, Node n2, Cluster c, bool isAbstract)
     {
         LinkedList<Edge> path;
         LinkedListNode<Edge> iter;
@@ -84,7 +106,11 @@ public class Graph
 
         float weight = 0f;
 
-        path = Pathfinder.FindPath(n1.pos, n2.pos, c.Boundaries, map.Obstacles);
+        if (isAbstract)
+            path = Pathfinder.FindPath(n1.child, n2.child, c.Boundaries);
+        else
+            path = Pathfinder.FindPath(n1.pos, n2.pos, c.Boundaries, map.Obstacles);
+
         if (path.Count > 0)
         {
             e1 = new Edge()
@@ -129,78 +155,89 @@ public class Graph
         throw new NotImplementedException("Not yet implemented");
     }
 
+    private delegate void CreateBorderNodes(Cluster c1, Cluster c2, bool x);
 
     /// <summary>
     /// Build Clusters of a certain level, given the size of a cluster
+    /// ClusterWidth is the number of clusters in the horizontal direction.
+    /// ClusterHeight is the number of clusters in the vertical direction.
     /// </summary>
-    private List<Cluster> BuildClusters(int level, int clusterSize)
+    private List<Cluster> BuildClusters(int level, int ClusterSize, int ClusterWidth, int ClusterHeight)
     {
         List<Cluster> clusters = new List<Cluster>();
 
-        Cluster c1; Cluster c2;
-        int ClusterHeight = Mathf.CeilToInt((float)map.Height / clusterSize);
-        int ClusterWidth = Mathf.CeilToInt((float)map.Width / clusterSize);
+        Cluster c1;
 
         int i, j;
+
+        //Create clusters of this level
+        for (i = 0; i < ClusterHeight; ++i)
+            for (j = 0; j < ClusterWidth; ++j)
+            {
+                c1 = new Cluster();
+                c1.Boundaries.Min = new GridTile(j * ClusterSize, i * ClusterSize);
+                c1.Boundaries.Max = new GridTile(
+                    Mathf.Min(c1.Boundaries.Min.x + ClusterSize - 1, map.Width - 1),
+                    Mathf.Min(c1.Boundaries.Min.y + ClusterSize - 1, map.Height - 1));
+
+                //Adjust size of cluster based on boundaries
+                c1.Width = c1.Boundaries.Max.x - c1.Boundaries.Min.x + 1;
+                c1.Height = c1.Boundaries.Max.y - c1.Boundaries.Min.y + 1;
+
+                if (level > 0)
+                {
+                    //Since we're abstract, we will have lower level clusters
+                    c1.Clusters = new List<Cluster>();
+
+                    //Add lower level clusters in newly created clusters
+                    foreach (Cluster c in C[level - 1])
+                        if (c1.Contains(c))
+                            c1.Clusters.Add(c);
+                }
+
+                clusters.Add(c1);
+            }
+
         if (level == 0)
         {
-            //Create clusters of this level
-            for (i = 0; i < ClusterHeight; ++i)
-                for (j = 0; j < ClusterWidth; ++j)
-                {
-                    c1 = new Cluster();
-                    c1.Boundaries.Min = new GridTile(j * clusterSize, i * clusterSize);
-                    c1.Boundaries.Max = new GridTile(
-                        Mathf.Min(c1.Boundaries.Min.x + clusterSize - 1, map.Width - 1),
-                        Mathf.Min(c1.Boundaries.Min.y + clusterSize - 1, map.Height - 1));
-
-                    //Adjust size of cluster based on boundaries
-                    c1.Width = c1.Boundaries.Max.x - c1.Boundaries.Min.x + 1;
-                    c1.Height = c1.Boundaries.Max.y - c1.Boundaries.Min.y + 1;
-
-                    clusters.Add(c1);
-                }
-
             //Add border nodes for every adjacent pair of clusters
             for (i = 0; i < clusters.Count; ++i)
-            {
-                c1 = clusters[i];
-
                 for (j = i + 1; j < clusters.Count; ++j)
-                {
-                    c2 = clusters[j];
-
-                    //Check if both clusters are adjacent
-                    if (c1.Boundaries.Min.x == c2.Boundaries.Min.x)
-                    {
-                        if (c1.Boundaries.Max.y + 1 == c2.Boundaries.Min.y)
-                            CreateBorderNodes(c1, c2, false);
-                        else if (c2.Boundaries.Max.y + 1 == c1.Boundaries.Min.y)
-                            CreateBorderNodes(c2, c1, false);
-
-                    }
-                    else if (c1.Boundaries.Min.y == c2.Boundaries.Min.y)
-                    {
-                        if (c1.Boundaries.Max.x + 1 == c2.Boundaries.Min.x)
-                            CreateBorderNodes(c1, c2, true);
-                        else if (c2.Boundaries.Max.x + 1 == c1.Boundaries.Min.x)
-                            CreateBorderNodes(c2, c1, true);
-                    }
-                }
-            }
-
-            //Add Intra edges for every border nodes and pathfind between them
-            for (i = 0; i < clusters.Count; ++i)
-            {
-                GenerateIntraEdges(clusters[i]);
-            }
+                    DetectAdjacentClusters(clusters[i], clusters[j], CreateConcreteBorderNodes);
 
         } else
         {
-            //TODO: Add clusters for arbitrary levels bigger than 1
+            //Add border nodes for every adjacent pair of clusters
+            for (i = 0; i < clusters.Count; ++i)
+                for (j = i + 1; j < clusters.Count; ++j)
+                    DetectAdjacentClusters(clusters[i], clusters[j], CreateAbstractBorderNodes);
         }
 
+        //Add Intra edges for every border nodes and pathfind between them
+        for (i = 0; i < clusters.Count; ++i)
+            GenerateIntraEdges(clusters[i], level > 0);
+
         return clusters;
+    }
+
+    private void DetectAdjacentClusters(Cluster c1, Cluster c2, CreateBorderNodes CreateBorderNodes)
+    {
+        //Check if both clusters are adjacent
+        if (c1.Boundaries.Min.x == c2.Boundaries.Min.x)
+        {
+            if (c1.Boundaries.Max.y + 1 == c2.Boundaries.Min.y)
+                CreateBorderNodes(c1, c2, false);
+            else if (c2.Boundaries.Max.y + 1 == c1.Boundaries.Min.y)
+                CreateBorderNodes(c2, c1, false);
+
+        }
+        else if (c1.Boundaries.Min.y == c2.Boundaries.Min.y)
+        {
+            if (c1.Boundaries.Max.x + 1 == c2.Boundaries.Min.x)
+                CreateBorderNodes(c1, c2, true);
+            else if (c2.Boundaries.Max.x + 1 == c1.Boundaries.Min.x)
+                CreateBorderNodes(c2, c1, true);
+        }
     }
 
     /// <summary>
@@ -208,7 +245,7 @@ public class Graph
     /// We always pass the lower cluster first (in c1).
     /// Adjacent index : if x == true, then c1.BottomRight.x else c1.BottomRight.y
     /// </summary>
-    private void CreateBorderNodes(Cluster c1, Cluster c2, bool x)
+    private void CreateConcreteBorderNodes(Cluster c1, Cluster c2, bool x)
     {
         int i, iMin, iMax;
         if (x)
@@ -230,29 +267,29 @@ public class Graph
                 lineSize++;
             } else {
 
-                CreateInterEdges(c1, c2, x, ref lineSize, i);
+                CreateConcreteInterEdges(c1, c2, x, ref lineSize, i);
             }
         }
 
         //If line size > 0 after looping, then we have another line to fill in
-        CreateInterEdges(c1, c2, x, ref lineSize, i);
+        CreateConcreteInterEdges(c1, c2, x, ref lineSize, i);
     }
 
     //i is the index at which we stopped (either its an obstacle or the end of the cluster
-    private void CreateInterEdges(Cluster c1, Cluster c2, bool x, ref int lineSize, int i)
+    private void CreateConcreteInterEdges(Cluster c1, Cluster c2, bool x, ref int lineSize, int i)
     {
         if (lineSize > 0)
         {
             if (lineSize <= 5)
             {
                 //Line is too small, create 1 inter edges
-                CreateInterEdge(c1, c2, x, i - (lineSize / 2 + 1));
+                CreateConcreteInterEdge(c1, c2, x, i - (lineSize / 2 + 1));
             }
             else
             {
                 //Create 2 inter edges
-                CreateInterEdge(c1, c2, x, i - lineSize);
-                CreateInterEdge(c1, c2, x, i - 1);
+                CreateConcreteInterEdge(c1, c2, x, i - lineSize);
+                CreateConcreteInterEdge(c1, c2, x, i - 1);
             }
 
             lineSize = 0;
@@ -260,7 +297,7 @@ public class Graph
     }
 
     //Inter edges are edges that crosses clusters
-    private void CreateInterEdge(Cluster c1, Cluster c2, bool x, int i)
+    private void CreateConcreteInterEdge(Cluster c1, Cluster c2, bool x, int i)
     {
         GridTile g1, g2;
         Node n1, n2;
@@ -290,9 +327,70 @@ public class Graph
         n1.edges.Add(new Edge() { start = n1, end = n2, type = EdgeType.INTER, weight = 1 });
         n2.edges.Add(new Edge() { start = n2, end = n1, type = EdgeType.INTER, weight = 1 });
     }
+
+
+    private void CreateAbstractBorderNodes(Cluster p1, Cluster p2, bool x)
+    {
+        foreach (Cluster c1 in p1.Clusters)
+            foreach(Cluster c2 in p2.Clusters)
+            {
+                if ((x && c1.Boundaries.Min.y == c2.Boundaries.Min.y && c1.Boundaries.Max.x + 1 == c2.Boundaries.Min.x) || 
+                    (!x && c1.Boundaries.Min.x == c2.Boundaries.Min.x && c1.Boundaries.Max.y + 1 == c2.Boundaries.Min.y))
+                {
+                    CreateAbstractInterEdges(p1, p2, c1, c2);
+                }
+            }
+    }
+
+    private void CreateAbstractInterEdges(Cluster p1, Cluster p2, Cluster c1, Cluster c2)
+    {
+        List<Edge> edges1 = new List<Edge>(),
+            edges2 = new List<Edge>();
+        Node n1, n2;
+
+        //Add edges that connects them from c1
+        foreach (KeyValuePair<GridTile, Node> n in c1.Nodes)
+            foreach (Edge e in n.Value.edges)
+            {
+                if (e.type == EdgeType.INTER && c2.Contains(e.end.pos))
+                    edges1.Add(e);
+            }
+
+        foreach(KeyValuePair<GridTile, Node> n in c2.Nodes)
+            foreach (Edge e in n.Value.edges)
+            {
+                if (e.type == EdgeType.INTER && c1.Contains(e.end.pos))
+                    edges2.Add(e);
+            }
+
+        //Find every pair of twin edges and insert them in their respective parents
+        foreach (Edge e1 in edges1)
+            foreach (Edge e2 in edges2)
+            {
+                if (e1.end == e2.start)
+                {
+                    if (!p1.Nodes.TryGetValue(e1.start.pos, out n1))
+                    {
+                        n1 = new Node(e1.start.pos) { child = e1.start };
+                        p1.Nodes.Add(n1.pos, n1);
+                    }
+
+                    if (!p2.Nodes.TryGetValue(e2.start.pos, out n2))
+                    {
+                        n2 = new Node(e2.start.pos) { child = e2.start };
+                        p2.Nodes.Add(n2.pos, n2);
+                    }
+
+                    n1.edges.Add(new Edge() { start = n1, end = n2, type = EdgeType.INTER, weight = 1 });
+                    n2.edges.Add(new Edge() { start = n2, end = n1, type = EdgeType.INTER, weight = 1 });
+
+                    break;  //Break the second loop since we've found a pair
+                }
+            }
+    }
      
     //Intra edges are edges that lives inside clusters
-    private void GenerateIntraEdges(Cluster c)
+    private void GenerateIntraEdges(Cluster c, bool isAbstract)
     {
         int i, j;
         Node n1, n2;
@@ -308,7 +406,7 @@ public class Graph
             {
                 n2 = nodes[j];
 
-                ConnectNodes(n1, n2, c);
+                ConnectNodes(n1, n2, c, isAbstract);
             }
         }
     }

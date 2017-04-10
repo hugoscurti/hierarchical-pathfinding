@@ -32,7 +32,7 @@ public class Pathfinder {
         );
     }
 
-    public static LinkedList<Edge> FindPath(Node start, Node dest)
+    public static LinkedList<Edge> FindPath(Node start, Node dest, Boundaries boundaries = null)
     {
         HashSet<GridTile> Visited = new HashSet<GridTile>();
         Dictionary<GridTile, Edge> Parent = new Dictionary<GridTile, Edge>();
@@ -59,6 +59,10 @@ public class Pathfinder {
             //Visit all neighbours through edges going out of node
             foreach (Edge e in current.edges)
             {
+                //If we defined boundaries, check if it crosses it
+                if (boundaries != null && IsOutOfGrid(e.end.pos, boundaries))
+                    continue;
+
                 //Check if we visited the outer end of the edge
                 if (Visited.Contains(e.end.pos))
                     continue;
