@@ -13,11 +13,11 @@ public class Map
     public int FreeTiles { get; set; }
 
     //Consider storing obstacles in a Hashset to save memory on large maps
-    //TODO: Consider storing obstacles with x values as first index and y values as second index!
+    //Obstacles are stores with the y value in the first array and the x value in the second array
     public bool[][] Obstacles { get; set; }
 
     //Original characters that forms the whole map
-    //TODO: Same as obstacles!
+    //Tiles are stored with the y value in the first array and the x value in the second array
     public char[][] Tiles { get; set; }
 
 

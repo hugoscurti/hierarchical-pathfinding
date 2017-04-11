@@ -122,6 +122,10 @@ public class MapController : MonoBehaviour {
         Benchmark.WriteResults(results);
     }
 
+    /// <summary>
+    /// Function called when the button find path is clicked. 
+    /// Do pathfind for both implementation (A* and HPA*), given the nodes selected
+    /// </summary>
     public void FindPath()
     {
         GridTile start = uiCtrl.Source.GetPositionField();
@@ -130,8 +134,10 @@ public class MapController : MonoBehaviour {
         displayedResult = RunPathfind(start, dest);
 
         uiCtrl.HPAStarTime.text = string.Format("{0} s", displayedResult.HPAStarResult.RunningTime);
+        uiCtrl.HPAStarLength.text = displayedResult.HPAStarResult.PathLength.ToString();
         
         uiCtrl.AStarTime.text = string.Format("{0} s", displayedResult.AStarResult.RunningTime);
+        uiCtrl.AStarLength.text = displayedResult.AStarResult.PathLength.ToString();
 
         //Display the result
         mapDisplay.DrawNormalPath(displayedResult.AStarResult.Path);
@@ -168,6 +174,9 @@ public class MapController : MonoBehaviour {
         }
     }
 
+    /// <summary>
+    /// Select the grid position clicked on.
+    /// </summary>
     void SelectGridPos()
     {
         if (Input.GetMouseButtonDown(0))

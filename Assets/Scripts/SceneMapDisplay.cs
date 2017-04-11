@@ -9,6 +9,9 @@ public class SceneMapDisplay : MonoBehaviour {
     public Color Black = Color.black;
     public Color White = Color.white;
 
+    public Color NormalPathColor;
+    public Color HPAPathColor;
+
     //Camera movement variables
     public float ZoomSpeed;
     public float MovementSpeed;
@@ -70,7 +73,7 @@ public class SceneMapDisplay : MonoBehaviour {
             current = queue.Dequeue();
 
             if (current.Key == 0)
-                DrawEdge(current.Value.start.pos, current.Value.end.pos, Color.red, this.HpaPath, 4);
+                DrawEdge(current.Value.start.pos, current.Value.end.pos, HPAPathColor, this.HpaPath, 4, true);
             else
             {
                 if (current.Value.type == EdgeType.INTER)
@@ -97,7 +100,7 @@ public class SceneMapDisplay : MonoBehaviour {
         LinkedListNode<Edge> current = NormalPath.First;
         while(current != null)
         {
-            DrawEdge(current.Value.start.pos, current.Value.end.pos, Color.green, this.NormalPath, 4);
+            DrawEdge(current.Value.start.pos, current.Value.end.pos, NormalPathColor, this.NormalPath, 4, true);
             current = current.Next;
         }
     }
@@ -205,7 +208,7 @@ public class SceneMapDisplay : MonoBehaviour {
                     if (!Visited.Contains(e.end.pos))
                     {
                         //Draw the edge
-                        DrawEdge(e.start.pos, e.end.pos, Black, Edges, 2);
+                        DrawEdge(e.start.pos, e.end.pos, Black, Edges, 2, false);
                     }
                 }
             }
@@ -268,21 +271,26 @@ public class SceneMapDisplay : MonoBehaviour {
                 Nodes);
     }
 
-    private void DrawEdge(GridTile start, GridTile end, Color color, GameObject parent, int sortOrder)
+    private void DrawEdge(GridTile start, GridTile end, Color color, GameObject parent, int sortOrder, bool isPath)
     {
         Vector3 pos = new Vector3(start.x, start.y, 3);
         Vector3 vEdge = new Vector3(end.x - start.x, end.y - start.y, 0);
         Vector3 scale = new Vector3(vEdge.magnitude, 0.1f, 1);
+
+        //Draw paths a bit more thick
+        if (isPath)
+            scale.y = 0.5f;
 
         pos = pos + vEdge / 2;
         pos.x += 0.5f;
         pos.y += 0.5f;
 
         float angle = Vector3.Angle(Vector3.right, vEdge);
-        //Since Vector3.agle doesn't consider direction, we check for direction with cross product
+        //Since Vector3.angle doesn't consider direction, we check for direction after with cross product
         Vector3 cross = Vector3.Cross(Vector3.right, vEdge);
         if (cross.z < 0) angle = 360 - angle;
 
+        //Get quaternion from the rotation
         Quaternion rot = Quaternion.AngleAxis(angle, Vector3.forward);
 
         DrawSprite(pos, scale, color, sortOrder, rot, parent);
@@ -310,14 +318,6 @@ public class SceneMapDisplay : MonoBehaviour {
 
     public void HandleCameraMove()
     {
-        //float deltax = Input.GetAxis("Horizontal"),
-        //    deltay = Input.GetAxis("Vertical");
-
-        //if (deltax != 0)
-        //    Camera.main.transform.position += Vector3.right * MovementSpeed * deltax;
-        //if (deltay != 0)
-        //    Camera.main.transform.position += Vector3.up * MovementSpeed * deltay;
-
         if (Input.GetMouseButton(1))
         {
             Camera.main.transform.position += Vector3.left  * Input.GetAxis("Mouse X") * MovementSpeed;
@@ -332,7 +332,7 @@ public class SceneMapDisplay : MonoBehaviour {
         {
             Camera.main.orthographicSize += ZoomSpeed * -delta;
 
-            //Bound cam size
+            //Bound minimum camera size
             if (Camera.main.orthographicSize < 0.1f) Camera.main.orthographicSize = 0.1f;
         }
     }

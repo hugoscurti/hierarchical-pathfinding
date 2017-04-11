@@ -19,17 +19,15 @@ public class Pathfinder {
         new KeyValuePair<GridTile, float>(new GridTile( 1,-1), SQRT2)
     };
 
-    private static int EuclidianDistanceSquared(Node node1, Node node2)
+    private static float EuclidianDistance(Node node1, Node node2)
     {
-        return EuclidianDistanceSquared(node1.pos, node2.pos);
+        return EuclidianDistance(node1.pos, node2.pos);
     }
 
 
-    private static int EuclidianDistanceSquared(GridTile tile1, GridTile tile2)
+    private static float EuclidianDistance(GridTile tile1, GridTile tile2)
     {
-        return (int) (
-            Mathf.Pow(tile2.x - tile1.x, 2) + Mathf.Pow(tile2.y - tile1.y, 2)
-        );
+        return Mathf.Sqrt(Mathf.Pow(tile2.x - tile1.x, 2) + Mathf.Pow(tile2.y - tile1.y, 2));
     }
 
     public static LinkedList<Edge> FindPath(Node start, Node dest, Boundaries boundaries = null)
@@ -43,7 +41,7 @@ public class Pathfinder {
         float temp_gCost, prev_gCost;
 
         gScore[start.pos] = 0;
-        pq.Enqueue(start, EuclidianDistanceSquared(start, dest));
+        pq.Enqueue(start, EuclidianDistance(start, dest));
         Node current;
 
         while(pq.Count > 0)
@@ -77,7 +75,7 @@ public class Pathfinder {
                 Parent[e.end.pos] = e;
                 gScore[e.end.pos] = temp_gCost;
 
-                pq.Enqueue(e.end, temp_gCost + EuclidianDistanceSquared(e.end, dest));
+                pq.Enqueue(e.end, temp_gCost + EuclidianDistance(e.end, dest));
             }
         }
         
@@ -96,7 +94,7 @@ public class Pathfinder {
         float temp_gCost, prev_gCost;
 
         gScore[start] = 0;
-        pq.Enqueue(start, EuclidianDistanceSquared(start, dest));
+        pq.Enqueue(start, EuclidianDistance(start, dest));
         GridTile current, neighbour = new GridTile();
 
         while (pq.Count > 0)
@@ -132,7 +130,7 @@ public class Pathfinder {
                 Parent[neighbour] = current;
                 gScore[neighbour] = temp_gCost;
 
-                pq.Enqueue(neighbour, temp_gCost + EuclidianDistanceSquared(neighbour, dest));
+                pq.Enqueue(neighbour, temp_gCost + EuclidianDistance(neighbour, dest));
                 //Loose the reference to this neighbour, we don't want to modify it in the queue
                 neighbour = new GridTile();
             }

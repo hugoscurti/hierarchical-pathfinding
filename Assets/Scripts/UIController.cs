@@ -18,6 +18,8 @@ public class UIController : MonoBehaviour {
     public Text ClusterTime;
     public Text HPAStarTime;
     public Text AStarTime;
+    public Text HPAStarLength;
+    public Text AStarLength;
 
     //Bool that says which last gridpoint we set between source and destination
     private bool sourceSet = false;

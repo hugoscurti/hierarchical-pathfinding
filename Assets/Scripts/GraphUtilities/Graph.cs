@@ -53,11 +53,14 @@ public class Graph
         Node newStart, newDest;
         nStart = null;
         nDest = null;
+        bool isConnected;
 
         for (int i = 0; i < depth; ++i)
         {
             cStart = null;
             cDest = null;
+            isConnected = false;
+
             foreach (Cluster c in C[i])
             {
                 if (c.Contains(start))
@@ -78,11 +81,14 @@ public class Graph
                     //Don't connect them to borders
                     nStart = new Node(start);
                     nDest = new Node(dest);
-                    ConnectNodes(nStart, nDest, cStart, false);
-                    continue;
+                    isConnected = ConnectNodes(nStart, nDest, cStart, false);
                 }
-                nStart = ConnectToBorder(start, cStart, false);
-                nDest = ConnectToBorder(dest, cDest, false);
+
+                if (!isConnected)
+                {
+                    nStart = ConnectToBorder(start, cStart, false);
+                    nDest = ConnectToBorder(dest, cDest, false);
+                }
             }
             else
             {
@@ -92,15 +98,23 @@ public class Graph
                     newDest = new Node(dest);
                     newStart.child = nStart;
                     newDest.child = nDest;
-                    ConnectNodes(newStart, newDest, cStart, true);
 
-                    nStart = newStart;
-                    nDest = newDest;
-                    continue;
+                    isConnected = ConnectNodes(newStart, newDest, cStart, true);
+
+                    if (isConnected)
+                    {
+                        //If they are reachable then we set them as the nodes
+                        //Otherwise we might be able to reach them from an upper layer
+                        nStart = newStart;
+                        nDest = newDest;
+                    }
                 }
 
-                nStart = ConnectToBorder(start, cStart, true, nStart);
-                nDest = ConnectToBorder(dest, cDest, true, nDest);
+                if (!isConnected)
+                {
+                    nStart = ConnectToBorder(start, cStart, true, nStart);
+                    nDest = ConnectToBorder(dest, cDest, true, nDest);
+                }
             }
         }
     }
@@ -159,7 +173,7 @@ public class Graph
     /// Connect two nodes by pathfinding between them. 
     /// </summary>
     /// <remarks>We assume they are different nodes. If the path returned is 0, then there is no path that connects them.</remarks>
-    private void ConnectNodes(Node n1, Node n2, Cluster c, bool isAbstract)
+    private bool ConnectNodes(Node n1, Node n2, Cluster c, bool isAbstract)
     {
         LinkedList<Edge> path;
         LinkedListNode<Edge> iter;
@@ -206,6 +220,12 @@ public class Graph
 
             n1.edges.Add(e1);
             n2.edges.Add(e2);
+
+            return true;
+        } else
+        {
+            //No path, return false
+            return false;
         }
     }
 

@@ -103,6 +103,7 @@ class Benchmark
                 groupTests.AvgAStarRunningTime = (oldRatio * groupTests.AvgAStarRunningTime) + (newRatio * avgs.AvgAStarRunningTime);
                 groupTests.AvgHPAPathLength = (oldRatio * groupTests.AvgHPAPathLength) + (newRatio * avgs.AvgHPAPathLength);
                 groupTests.AvgHPARunningTime = (oldRatio * groupTests.AvgHPARunningTime) + (newRatio * avgs.AvgHPARunningTime);
+                groupTests.Count = newCount;
             } else {
                 //Add new entry
                 groupTests = new GroupedTestResult()
