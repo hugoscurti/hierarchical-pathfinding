@@ -90,14 +90,15 @@ public class Graph
                 {
                     newStart = new Node(start);
                     newDest = new Node(dest);
-                    ConnectNodes(newStart, newDest, cStart, true);
                     newStart.child = nStart;
                     newDest.child = nDest;
+                    ConnectNodes(newStart, newDest, cStart, true);
 
                     nStart = newStart;
                     nDest = newDest;
                     continue;
                 }
+
                 nStart = ConnectToBorder(start, cStart, true, nStart);
                 nDest = ConnectToBorder(dest, cDest, true, nDest);
             }

@@ -36,7 +36,7 @@ class Benchmark
             {
                 line = sr.ReadLine();   //First line is header
                 line = sr.ReadLine();
-                while (line != null)
+                while (!String.IsNullOrEmpty(line))
                 {
                     blocks = line.Split(',');
                     accumulatedResults.Add(new GroupedTestResult()
