@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using UnityEngine;
 
 public class Graph
@@ -210,13 +208,6 @@ public class Graph
         }
     }
 
-    /// <summary>
-    /// Verify whether two clusters connect with each other through their inter edges
-    /// </summary>
-    public bool IsReachable(Cluster c1, Cluster c2) {
-        throw new NotImplementedException("Not yet implemented");
-    }
-
     private delegate void CreateBorderNodes(Cluster c1, Cluster c2, bool x);
 
     /// <summary>
@@ -228,7 +219,7 @@ public class Graph
     {
         List<Cluster> clusters = new List<Cluster>();
 
-        Cluster c1;
+        Cluster clst;
 
         int i, j;
 
@@ -236,28 +227,28 @@ public class Graph
         for (i = 0; i < ClusterHeight; ++i)
             for (j = 0; j < ClusterWidth; ++j)
             {
-                c1 = new Cluster();
-                c1.Boundaries.Min = new GridTile(j * ClusterSize, i * ClusterSize);
-                c1.Boundaries.Max = new GridTile(
-                    Mathf.Min(c1.Boundaries.Min.x + ClusterSize - 1, map.Width - 1),
-                    Mathf.Min(c1.Boundaries.Min.y + ClusterSize - 1, map.Height - 1));
+                clst = new Cluster();
+                clst.Boundaries.Min = new GridTile(j * ClusterSize, i * ClusterSize);
+                clst.Boundaries.Max = new GridTile(
+                    Mathf.Min(clst.Boundaries.Min.x + ClusterSize - 1, map.Width - 1),
+                    Mathf.Min(clst.Boundaries.Min.y + ClusterSize - 1, map.Height - 1));
 
                 //Adjust size of cluster based on boundaries
-                c1.Width = c1.Boundaries.Max.x - c1.Boundaries.Min.x + 1;
-                c1.Height = c1.Boundaries.Max.y - c1.Boundaries.Min.y + 1;
+                clst.Width = clst.Boundaries.Max.x - clst.Boundaries.Min.x + 1;
+                clst.Height = clst.Boundaries.Max.y - clst.Boundaries.Min.y + 1;
 
                 if (level > 0)
                 {
                     //Since we're abstract, we will have lower level clusters
-                    c1.Clusters = new List<Cluster>();
+                    clst.Clusters = new List<Cluster>();
 
                     //Add lower level clusters in newly created clusters
                     foreach (Cluster c in C[level - 1])
-                        if (c1.Contains(c))
-                            c1.Clusters.Add(c);
+                        if (clst.Contains(c))
+                            clst.Clusters.Add(c);
                 }
 
-                clusters.Add(c1);
+                clusters.Add(clst);
             }
 
         if (level == 0)

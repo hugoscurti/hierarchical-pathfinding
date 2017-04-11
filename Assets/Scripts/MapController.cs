@@ -18,6 +18,8 @@ public class MapController : MonoBehaviour {
     private Map map;
     private Graph graph;
 
+    private TestResult displayedResult;
+
 	// Use this for initialization
 	void Start () {
         mapDisplay = GetComponent<SceneMapDisplay>();
@@ -30,6 +32,8 @@ public class MapController : MonoBehaviour {
 
     public void LoadMap()
     {
+        displayedResult = null; //Reset the displayed result
+
         FileInfo current = maps[uiCtrl.DdlMaps.value];
         int ClusterSize = uiCtrl.Cluster.GetValue();
         int LayerDepth = uiCtrl.Layers.GetValue();
@@ -123,30 +127,33 @@ public class MapController : MonoBehaviour {
         GridTile start = uiCtrl.Source.GetPositionField();
         GridTile dest = uiCtrl.Destination.GetPositionField();
 
-        TestResult res = RunPathfind(start, dest);
+        displayedResult = RunPathfind(start, dest);
 
-        uiCtrl.HPAStarTime.text = string.Format("{0} s", res.HPAStarResult.RunningTime);
+        uiCtrl.HPAStarTime.text = string.Format("{0} s", displayedResult.HPAStarResult.RunningTime);
         
-        uiCtrl.AStarTime.text = string.Format("{0} s", res.AStarResult.RunningTime);
+        uiCtrl.AStarTime.text = string.Format("{0} s", displayedResult.AStarResult.RunningTime);
 
         //Display the result
-        mapDisplay.DrawPaths(res.HPAStarResult.Path, res.AStarResult.Path);
+        mapDisplay.DrawNormalPath(displayedResult.AStarResult.Path);
+        mapDisplay.DrawHpaPath(displayedResult.HPAStarResult.Path, graph.depth - uiCtrl.DdlLayers.value);
     }
 
-
+    /// <summary>
+    /// Function called when the layer dropdown value has changed.
+    /// Typically we want to show clusters related to the layer selected
+    /// as well as resulting hierarchical paths.
+    /// </summary>
     public void OnLayerChange()
     {
         int layer = uiCtrl.DdlLayers.value;
 
         if (layer == 0)
-        {
-            mapDisplay.DrawClusters(map, null);
-        } else
-        {
+            mapDisplay.DrawClusters(map, null); //No clusters at the lower level
+        else
             mapDisplay.DrawClusters(map, graph.C[layer - 1]);
-        }
 
-        //TODO: Draw resulted path corresponding to the layer selected, if we did pathfind
+        if (displayedResult != null)
+            mapDisplay.DrawHpaPath(displayedResult.HPAStarResult.Path, graph.depth - layer);
     }
 
     // Update is called once per frame

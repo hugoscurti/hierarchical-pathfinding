@@ -48,26 +48,53 @@ public class SceneMapDisplay : MonoBehaviour {
         DrawMap(map, graph);
     }
 
-    //Draw the path formed by the edges
-    public void DrawPaths(LinkedList<Edge> HpaPath, LinkedList<Edge> NormalPath)
-    {
+    //Draw the hpa path while going down into underlying paths
+    public void DrawHpaPath(LinkedList<Edge> HpaPath, int layers) {
+        //Reset GameObject
         Destroy(this.HpaPath);
         this.HpaPath = new GameObject("HPA* Path");
         this.HpaPath.transform.SetParent(transform, false);
 
-        LinkedListNode<Edge> current = HpaPath.First;
-        while (current != null)
-        {
-            DrawEdge(current.Value.start.pos, current.Value.end.pos, Color.red, this.HpaPath, 4);
-            current = current.Next;
-        }
+        //Iterate through all edges as a breadth-first-search on parent-child connections between edges
+        //we start at value layers, and add children to the queue while decreminting the layer value.
+        //When the layer value is 0, we display it
+        Queue<KeyValuePair<int, Edge>> queue = new Queue<KeyValuePair<int, Edge>>();
 
+        //Add all edges from current level
+        foreach (Edge e in HpaPath)
+            queue.Enqueue(new KeyValuePair<int, Edge>(layers, e));
+
+        KeyValuePair<int, Edge> current;
+        while(queue.Count > 0)
+        {
+            current = queue.Dequeue();
+
+            if (current.Key == 0)
+                DrawEdge(current.Value.start.pos, current.Value.end.pos, Color.red, this.HpaPath, 4);
+            else
+            {
+                if (current.Value.type == EdgeType.INTER)
+                {
+                    //No underlying path for intra edges... 
+                    //Add the same edge with lower layer
+                    queue.Enqueue(new KeyValuePair<int, Edge>(current.Key - 1, current.Value));
+                } else {
+                    foreach (Edge e in current.Value.UnderlyingPath)
+                        queue.Enqueue(new KeyValuePair<int, Edge>(current.Key - 1, e));
+                }
+            }
+        }
+    }
+
+    //Draw the path formed by the edges
+    public void DrawNormalPath(LinkedList<Edge> NormalPath)
+    {
         Destroy(this.NormalPath);
         this.NormalPath = new GameObject("A* Path");
         this.NormalPath.transform.SetParent(transform, false);
 
 
-        current = NormalPath.First;
+        LinkedListNode<Edge> current = NormalPath.First;
         while(current != null)
         {
             DrawEdge(current.Value.start.pos, current.Value.end.pos, Color.green, this.NormalPath, 4);
@@ -91,7 +118,6 @@ public class SceneMapDisplay : MonoBehaviour {
         Destroy(Nodes);
         Destroy(Edges);
         Destroy(HpaPath);
-        Destroy(NormalPath);
     }
 
     void DrawMap(Map map, Graph graph)
