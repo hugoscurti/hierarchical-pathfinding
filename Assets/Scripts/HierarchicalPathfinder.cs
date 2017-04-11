@@ -18,7 +18,7 @@ public class HierarchicalPathfinder
 
 
         //3. Remove all created nodes from the graph
-        graph.RemoveNodes(nStart, nDest);
+        graph.RemoveAddedNodes();
 
         return path;
     }

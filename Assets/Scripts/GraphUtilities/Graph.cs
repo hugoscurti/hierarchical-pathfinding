@@ -10,6 +10,9 @@ public class Graph
 
     Map map;
 
+    //We keep track of added nodes to remove them afterwards
+    List<Node> AddedNodes;
+
     /// <summary>
     /// Construct a graph from the map
     /// </summary>
@@ -17,6 +20,7 @@ public class Graph
     {
         depth = MaxLevel;
         this.map = map;
+        AddedNodes = new List<Node>();
 
         int ClusterWidth, ClusterHeight;
 
@@ -54,6 +58,7 @@ public class Graph
         nStart = null;
         nDest = null;
         bool isConnected;
+        AddedNodes.Clear();
 
         for (int i = 0; i < depth; ++i)
         {
@@ -78,7 +83,7 @@ public class Graph
             {
                 if (cStart == cDest)
                 {
-                    //Don't connect them to borders
+                    //Don't connect them to borders if they can be reached
                     nStart = new Node(start);
                     nDest = new Node(dest);
                     isConnected = ConnectNodes(nStart, nDest, cStart, false);
@@ -122,27 +127,12 @@ public class Graph
     /// <summary>
     /// Remove nodes from the graph, including all underlying edges
     /// </summary>
-    public void RemoveNodes(Node start, Node dest)
+    public void RemoveAddedNodes()
     {
-        //Remove everything that connects to start
-        RemoveNode(start);
-
-        //Remove everything that connects to end
-        RemoveNode(dest);
-    }
-
-    //Remove everything that connects to n, going into its children
-    private void RemoveNode(Node n)
-    {
-        Node current = n;
-        while (current != null)
-        {
-            foreach (Edge e in current.edges)
-                //Find an edge in current.end where the end is the this node
-                e.end.edges.RemoveAll((ee) => ee.end == n);
-
-            current = current.child;
-        }
+        foreach(Node n in AddedNodes)
+            foreach(Edge e in n.edges)
+                //Find an edge in current.end that points to this node
+                e.end.edges.RemoveAll((ee)=> ee.end == n);
     }
 
     /// <summary>
@@ -165,6 +155,9 @@ public class Graph
         {
             ConnectNodes(newNode, n.Value, c, isAbstract);
         }
+
+        //Since this node is not part of the graph, we keep track of it to remove it later
+        AddedNodes.Add(newNode);
 
         return newNode;
     }
