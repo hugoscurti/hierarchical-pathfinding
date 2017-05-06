@@ -1,14 +1,14 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
 public class MapController : MonoBehaviour {
 
     public EventSystem eventSys;
+
+    public MessageBox MsgBox;
 
     private List<FileInfo> maps;
 
@@ -192,7 +192,7 @@ public class MapController : MonoBehaviour {
                 //Be sure that it's a valid position
                 if (map.Obstacles[pos.y][pos.x])
                 {
-                    EditorUtility.DisplayDialog("Info", "You cannot select a tile marked as an obstacle.", "Ok");
+                    MsgBox.Show("You cannot select a tile marked as an obstacle.", null);
                     return;
                 }
 
