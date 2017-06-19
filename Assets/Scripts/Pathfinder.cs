@@ -4,7 +4,7 @@ using UnityEngine;
 
 
 public class Pathfinder {
-    private static float SQRT2 = Mathf.Sqrt(2f);
+    public static float SQRT2 = Mathf.Sqrt(2f);
 
     //Offset used to get neighbours of a cell (in manhattan setup)
     static KeyValuePair<GridTile, float>[] neighbours = {

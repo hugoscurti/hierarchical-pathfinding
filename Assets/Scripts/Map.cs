@@ -24,6 +24,15 @@ public class Map
     private Map() {}
 
 
+    //Returns whether the tile is a valid free tile in the map or not
+    public bool IsFreeTile(GridTile tile)
+    {
+        return tile.x >= 0 && tile.x < Width &&
+            tile.y >= 0 && tile.y < Height &&
+            !Obstacles[tile.y][tile.x];
+    }
+
+
     public static List<FileInfo> GetMaps()
     {
         string BaseMapDirectory = GetBaseMapDirectory();

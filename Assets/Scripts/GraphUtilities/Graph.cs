@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class Graph
@@ -8,7 +7,11 @@ public class Graph
     //List of clusters for every level of abstraction
     public List<Cluster>[] C;
 
-    Map map;
+    //Keep a representation of the map by low level nodes
+    Dictionary<GridTile, Node> nodes;
+
+    int width;
+    int height;
 
     //We keep track of added nodes to remove them afterwards
     List<Node> AddedNodes;
@@ -19,8 +22,11 @@ public class Graph
     public Graph(Map map, int MaxLevel, int clusterSize)
     {
         depth = MaxLevel;
-        this.map = map;
         AddedNodes = new List<Node>();
+
+        nodes = CreateMapRepresentation(map);
+        width = map.Width;
+        height = map.Height;
 
         int ClusterWidth, ClusterHeight;
 
@@ -48,6 +54,67 @@ public class Graph
         }
     }
 
+
+    /// <summary>
+    /// Create the node-based representation of the map
+    /// </summary>
+    private Dictionary<GridTile, Node> CreateMapRepresentation(Map map)
+    {
+        var mapnodes = new Dictionary<GridTile, Node>(map.FreeTiles);
+        int i, j;
+        GridTile gridTile;
+
+        //1. Create all nodes necessary
+        for (i = 0; i < map.Width; ++i)
+            for (j = 0; j < map.Height; ++j)
+            {
+                if (!map.Obstacles[j][i])
+                {
+                    gridTile = new GridTile(i, j);
+                    mapnodes.Add(gridTile, new Node(gridTile));
+                }
+            }
+
+        //2. Create all possible edges
+        foreach (Node n in mapnodes.Values)
+        {
+            //Look for straight edges
+            for(i = -1; i < 2; i += 2)
+            {
+                SearchMapEdge(map, mapnodes, n, n.pos.x + i, n.pos.y, 1f);
+
+                SearchMapEdge(map, mapnodes, n, n.pos.x, n.pos.y + i, 1f);
+            }
+
+            //Look for diagonal edges
+            for(i = -1; i< 2; i += 2)
+                for(j = -1; j < 2; j += 2)
+                {
+                    SearchMapEdge(map, mapnodes, n, n.pos.x + i, n.pos.y + j, Pathfinder.SQRT2);
+                }
+        }
+
+        return mapnodes;
+    }
+
+    /// <summary>
+    /// Add the edge to the node if it's a valid map edge
+    /// </summary>
+    private void SearchMapEdge(Map map, Dictionary<GridTile, Node> mapNodes, Node n, int x, int y, float weight)
+    {
+        GridTile gridTile = new GridTile(x, y);
+        if (map.IsFreeTile(gridTile))
+        {
+            n.edges.Add(new Edge()
+            {
+                start = n,
+                end = mapNodes[gridTile],
+                type = EdgeType.INTER,
+                weight = weight
+            });
+        }
+    }
+
     /// <summary>
     /// Insert start and dest nodes in graph in all layers
     /// </summary>
@@ -55,8 +122,8 @@ public class Graph
     {
         Cluster cStart, cDest;
         Node newStart, newDest;
-        nStart = null;
-        nDest = null;
+        nStart = nodes[start];
+        nDest = nodes[dest];
         bool isConnected;
         AddedNodes.Clear();
 
@@ -79,47 +146,26 @@ public class Graph
             }
 
             //This is the right cluster
-            if (i == 0)
+            if (cStart == cDest)
             {
-                if (cStart == cDest)
-                {
-                    //Don't connect them to borders if they can be reached
-                    nStart = new Node(start);
-                    nDest = new Node(dest);
-                    isConnected = ConnectNodes(nStart, nDest, cStart, false);
-                }
+                newStart = new Node(start) { child = nStart };
+                newDest = new Node(dest) { child = nDest };
 
-                if (!isConnected)
+                isConnected = ConnectNodes(newStart, newDest, cStart);
+
+                if (isConnected)
                 {
-                    nStart = ConnectToBorder(start, cStart, false);
-                    nDest = ConnectToBorder(dest, cDest, false);
+                    //If they are reachable then we set them as the nodes
+                    //Otherwise we might be able to reach them from an upper layer
+                    nStart = newStart;
+                    nDest = newDest;
                 }
             }
-            else
+
+            if (!isConnected)
             {
-                if (cStart == cDest)
-                {
-                    newStart = new Node(start);
-                    newDest = new Node(dest);
-                    newStart.child = nStart;
-                    newDest.child = nDest;
-
-                    isConnected = ConnectNodes(newStart, newDest, cStart, true);
-
-                    if (isConnected)
-                    {
-                        //If they are reachable then we set them as the nodes
-                        //Otherwise we might be able to reach them from an upper layer
-                        nStart = newStart;
-                        nDest = newDest;
-                    }
-                }
-
-                if (!isConnected)
-                {
-                    nStart = ConnectToBorder(start, cStart, true, nStart);
-                    nDest = ConnectToBorder(dest, cDest, true, nDest);
-                }
+                nStart = ConnectToBorder(start, cStart, nStart);
+                nDest = ConnectToBorder(dest, cDest, nDest);
             }
         }
     }
@@ -139,7 +185,7 @@ public class Graph
     /// Connect the grid tile to borders by creating a new node
     /// </summary>
     /// <returns>The node created</returns>
-    private Node ConnectToBorder(GridTile pos, Cluster c, bool isAbstract, Node child = null)
+    private Node ConnectToBorder(GridTile pos, Cluster c, Node child)
     {
         Node newNode;
 
@@ -148,12 +194,11 @@ public class Graph
             return newNode;
 
         //Otherwise create a node and pathfind through border nodes
-        newNode = new Node(pos);
-        if (isAbstract) newNode.child = child;
+        newNode = new Node(pos) { child = child };
 
         foreach (KeyValuePair<GridTile, Node> n in c.Nodes)
         {
-            ConnectNodes(newNode, n.Value, c, isAbstract);
+            ConnectNodes(newNode, n.Value, c);
         }
 
         //Since this node is not part of the graph, we keep track of it to remove it later
@@ -166,7 +211,7 @@ public class Graph
     /// Connect two nodes by pathfinding between them. 
     /// </summary>
     /// <remarks>We assume they are different nodes. If the path returned is 0, then there is no path that connects them.</remarks>
-    private bool ConnectNodes(Node n1, Node n2, Cluster c, bool isAbstract)
+    private bool ConnectNodes(Node n1, Node n2, Cluster c)
     {
         LinkedList<Edge> path;
         LinkedListNode<Edge> iter;
@@ -174,10 +219,7 @@ public class Graph
 
         float weight = 0f;
 
-        if (isAbstract)
-            path = Pathfinder.FindPath(n1.child, n2.child, c.Boundaries);
-        else
-            path = Pathfinder.FindPath(n1.pos, n2.pos, c.Boundaries, map.Obstacles);
+        path = Pathfinder.FindPath(n1.child, n2.child, c.Boundaries);
 
         if (path.Count > 0)
         {
@@ -244,8 +286,8 @@ public class Graph
                 clst = new Cluster();
                 clst.Boundaries.Min = new GridTile(j * ClusterSize, i * ClusterSize);
                 clst.Boundaries.Max = new GridTile(
-                    Mathf.Min(clst.Boundaries.Min.x + ClusterSize - 1, map.Width - 1),
-                    Mathf.Min(clst.Boundaries.Min.y + ClusterSize - 1, map.Height - 1));
+                    Mathf.Min(clst.Boundaries.Min.x + ClusterSize - 1, width - 1),
+                    Mathf.Min(clst.Boundaries.Min.y + ClusterSize - 1, height - 1));
 
                 //Adjust size of cluster based on boundaries
                 clst.Width = clst.Boundaries.Max.x - clst.Boundaries.Min.x + 1;
@@ -282,7 +324,7 @@ public class Graph
 
         //Add Intra edges for every border nodes and pathfind between them
         for (i = 0; i < clusters.Count; ++i)
-            GenerateIntraEdges(clusters[i], level > 0);
+            GenerateIntraEdges(clusters[i]);
 
         return clusters;
     }
@@ -328,8 +370,8 @@ public class Graph
         int lineSize = 0;
         for (i = iMin; i < iMax; ++i)
         {
-            if ((x && (!map.Obstacles[i][c1.Boundaries.Max.x] && !map.Obstacles[i][c2.Boundaries.Min.x]))
-                || !x && (!map.Obstacles[c1.Boundaries.Max.y][i] && !map.Obstacles[c2.Boundaries.Min.y][i]))
+            if (x && (nodes.ContainsKey(new GridTile(c1.Boundaries.Max.x, i)) && nodes.ContainsKey(new GridTile(c2.Boundaries.Min.x, i)))
+                || !x && (nodes.ContainsKey(new GridTile(i, c1.Boundaries.Max.y)) && nodes.ContainsKey(new GridTile(i, c2.Boundaries.Min.y))))
             {
                 lineSize++;
             } else {
@@ -383,12 +425,14 @@ public class Graph
         {
             n1 = new Node(g1);
             c1.Nodes.Add(g1, n1);
+            n1.child = nodes[g1];
         }
 
         if (!c2.Nodes.TryGetValue(g2, out n2))
         {
             n2 = new Node(g2);
             c2.Nodes.Add(g2, n2);
+            n2.child = nodes[g2];
         }
 
         n1.edges.Add(new Edge() { start = n1, end = n2, type = EdgeType.INTER, weight = 1 });
@@ -457,7 +501,7 @@ public class Graph
     }
      
     //Intra edges are edges that lives inside clusters
-    private void GenerateIntraEdges(Cluster c, bool isAbstract)
+    private void GenerateIntraEdges(Cluster c)
     {
         int i, j;
         Node n1, n2;
@@ -473,7 +517,7 @@ public class Graph
             {
                 n2 = nodes[j];
 
-                ConnectNodes(n1, n2, c, isAbstract);
+                ConnectNodes(n1, n2, c);
             }
         }
     }
