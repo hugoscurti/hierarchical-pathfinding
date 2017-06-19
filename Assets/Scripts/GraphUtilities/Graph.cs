@@ -3,12 +3,14 @@ using UnityEngine;
 
 public class Graph
 {
+    public static float SQRT2 = Mathf.Sqrt(2f);
+
     public int depth;
     //List of clusters for every level of abstraction
     public List<Cluster>[] C;
 
     //Keep a representation of the map by low level nodes
-    Dictionary<GridTile, Node> nodes;
+    public Dictionary<GridTile, Node> nodes;
 
     int width;
     int height;
@@ -81,16 +83,16 @@ public class Graph
             //Look for straight edges
             for(i = -1; i < 2; i += 2)
             {
-                SearchMapEdge(map, mapnodes, n, n.pos.x + i, n.pos.y, 1f);
+                SearchMapEdge(map, mapnodes, n, n.pos.x + i, n.pos.y, false);
 
-                SearchMapEdge(map, mapnodes, n, n.pos.x, n.pos.y + i, 1f);
+                SearchMapEdge(map, mapnodes, n, n.pos.x, n.pos.y + i, false);
             }
 
             //Look for diagonal edges
             for(i = -1; i< 2; i += 2)
                 for(j = -1; j < 2; j += 2)
                 {
-                    SearchMapEdge(map, mapnodes, n, n.pos.x + i, n.pos.y + j, Pathfinder.SQRT2);
+                    SearchMapEdge(map, mapnodes, n, n.pos.x + i, n.pos.y + j, true);
                 }
         }
 
@@ -100,19 +102,35 @@ public class Graph
     /// <summary>
     /// Add the edge to the node if it's a valid map edge
     /// </summary>
-    private void SearchMapEdge(Map map, Dictionary<GridTile, Node> mapNodes, Node n, int x, int y, float weight)
+    private void SearchMapEdge(Map map, Dictionary<GridTile, Node> mapNodes, Node n, int x, int y, bool diagonal)
     {
-        GridTile gridTile = new GridTile(x, y);
-        if (map.IsFreeTile(gridTile))
+        var weight = diagonal ? SQRT2 : 1f;
+        GridTile gridTile = new GridTile();
+
+        //Don't let diagonal movement occur when an obstacle is crossing the edge
+        if (diagonal)
         {
-            n.edges.Add(new Edge()
-            {
-                start = n,
-                end = mapNodes[gridTile],
-                type = EdgeType.INTER,
-                weight = weight
-            });
+            gridTile.x = n.pos.x;
+            gridTile.y = y;
+            if (!map.IsFreeTile(gridTile)) return;
+
+            gridTile.x = x;
+            gridTile.y = n.pos.y;
+            if (!map.IsFreeTile(gridTile)) return;
         }
+
+        gridTile.x = x;
+        gridTile.y = y;
+        if (!map.IsFreeTile(gridTile)) return;
+
+        //Edge is valid, add it to the node
+        n.edges.Add(new Edge()
+        {
+            start = n,
+            end = mapNodes[gridTile],
+            type = EdgeType.INTER,
+            weight = weight
+        });
     }
 
     /// <summary>

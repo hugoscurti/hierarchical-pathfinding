@@ -5,7 +5,7 @@ using System.Collections.Generic;
 public class HierarchicalPathfinder
 {
 
-    public static LinkedList<Edge> FindPath(Graph graph, GridTile start, GridTile dest)
+    public static LinkedList<Edge> FindHierarchicalPath(Graph graph, GridTile start, GridTile dest)
     {
         Node nStart, nDest;
 
@@ -21,5 +21,13 @@ public class HierarchicalPathfinder
         graph.RemoveAddedNodes();
 
         return path;
+    }
+
+    public static LinkedList<Edge> FindLowlevelPath(Graph graph, GridTile start, GridTile dest)
+    {
+        Node nStart = graph.nodes[start],
+            nDest = graph.nodes[dest];
+
+        return Pathfinder.FindPath(nStart, nDest);
     }
 }

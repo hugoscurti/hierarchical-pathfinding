@@ -75,7 +75,7 @@ public class MapController : MonoBehaviour {
 
         PathfindResult res = new PathfindResult();
         before = Time.realtimeSinceStartup;
-        res.Path = HierarchicalPathfinder.FindPath(graph, start, dest);
+        res.Path = HierarchicalPathfinder.FindHierarchicalPath(graph, start, dest);
         after = Time.realtimeSinceStartup;
 
         res.RunningTime = after - before;
@@ -84,7 +84,7 @@ public class MapController : MonoBehaviour {
 
         res = new PathfindResult();
         before = Time.realtimeSinceStartup;
-        res.Path = Pathfinder.FindPath(start, dest, map.Boundaries, map.Obstacles);
+        res.Path = HierarchicalPathfinder.FindLowlevelPath(graph, start, dest);
         after = Time.realtimeSinceStartup;
 
         res.RunningTime = after - before;

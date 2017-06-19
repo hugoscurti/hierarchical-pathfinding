@@ -160,7 +160,8 @@ class Benchmark
         using (FileStream fs = f.OpenRead())
         using (StreamReader sr = new StreamReader(fs))
         {
-            float vers = ReadFloatValue(sr, "version");
+            //Read the verion value so that we can go to the next value
+            ReadFloatValue(sr, "version");
 
             line = sr.ReadLine();
             string[] blocks;
