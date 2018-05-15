@@ -262,8 +262,12 @@ public class Graph
             iter = e1.UnderlyingPath.Last;
             while (iter != null)
             {
-                e2.UnderlyingPath.AddLast(iter.Value);
-                weight += iter.Value.weight;
+                // Find twin edge
+                var val = iter.Value.end.edges.Find(
+                    e => e.start == iter.Value.end && e.end == iter.Value.start);
+
+                e2.UnderlyingPath.AddLast(val);
+                weight += val.weight;
                 iter = iter.Previous;
             }
 

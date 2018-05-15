@@ -59,12 +59,14 @@ public class GridTile {
 
     public static bool operator !=(GridTile o1, GridTile o2)
     {
-        return !o1.Equals(o2);
+        if (ReferenceEquals(o1, null)) return !ReferenceEquals(o2, null);
+        else return !o1.Equals(o2);
     }
 
     public static bool operator ==(GridTile o1, GridTile o2)
     {
-        return o1.Equals(o2);
+        if (ReferenceEquals(o1, null)) return ReferenceEquals(o2, null);
+        else return o1.Equals(o2);
     }
 
 }
