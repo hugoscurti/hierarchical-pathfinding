@@ -33,13 +33,21 @@ public class SceneMapDisplay : MonoBehaviour {
     GameObject HpaPath;
     GameObject NormalPath;
 
-    void Awake ()
+    void Awake()
     {
     }
 
     // Use this for initialization
     void Start()
     {
+    }
+
+    private void _Destroy(Object gameObject)
+    {
+        if (Application.isPlaying)
+            Destroy(gameObject);
+        else
+            DestroyImmediate(gameObject);
     }
 
 
@@ -51,15 +59,20 @@ public class SceneMapDisplay : MonoBehaviour {
         DrawMap(map, graph);
     }
 
+    public void ClearMap()
+    {
+        Delete();
+    }
+
     //Draw the hpa path while going down into underlying paths
     public void DrawHpaPath(LinkedList<Edge> HpaPath, int layers) {
         //Reset GameObject
-        Destroy(this.HpaPath);
+        _Destroy(this.HpaPath);
         this.HpaPath = new GameObject("HPA* Path");
         this.HpaPath.transform.SetParent(transform, false);
 
         //Iterate through all edges as a breadth-first-search on parent-child connections between edges
-        //we start at value layers, and add children to the queue while decreminting the layer value.
+        //we start at value layers, and add children to the queue while decrementing the layer value.
         //When the layer value is 0, we display it
         Queue<KeyValuePair<int, Edge>> queue = new Queue<KeyValuePair<int, Edge>>();
 
@@ -92,7 +105,7 @@ public class SceneMapDisplay : MonoBehaviour {
     //Draw the path formed by the edges
     public void DrawNormalPath(LinkedList<Edge> NormalPath)
     {
-        Destroy(this.NormalPath);
+        _Destroy(this.NormalPath);
         this.NormalPath = new GameObject("A* Path");
         this.NormalPath.transform.SetParent(transform, false);
 
@@ -107,20 +120,27 @@ public class SceneMapDisplay : MonoBehaviour {
 
     void Delete()
     {
-        Destroy(MapGameObj);
-        Destroy(Clusters);
-        Destroy(Nodes);
-        Destroy(Edges);
-        Destroy(HpaPath);
-        Destroy(NormalPath);
+        _Destroy(MapGameObj);
+        _Destroy(Clusters);
+        _Destroy(Nodes);
+        _Destroy(Edges);
+        _Destroy(HpaPath);
+        _Destroy(NormalPath);
     }
 
     void DeleteClusters()
     {
-        Destroy(Clusters);
-        Destroy(Nodes);
-        Destroy(Edges);
-        Destroy(HpaPath);
+        _Destroy(Clusters);
+        _Destroy(Nodes);
+        _Destroy(Edges);
+        _Destroy(HpaPath);
+    }
+
+    public void ToggleClusters(bool active)
+    {
+        Clusters.SetActive(active);
+        Nodes.SetActive(active);
+        Edges.SetActive(active);
     }
 
     void DrawMap(Map map, Graph graph)
