@@ -147,21 +147,15 @@ public class SceneMapDisplay : MonoBehaviour {
 
         //Instantiate prefabs for gridtile
         //i is the y coordinate
-        for (int i = 0; i < map.Tiles.Length; ++i)
+        Color c;
+        for (int i = 0; i < map.Height; ++i)
         {
             //j is the x coordinate
-            for (int j = 0; j < map.Tiles[i].Length; ++j)
+            for (int j = 0; j < map.Width; ++j)
             {
-                switch (map.Tiles[i][j])
-                {
-                    case 'T':
-                        DrawTile(j, i, Green);
-                        break;
-                    case '.':
-                    case 'G':
-                        DrawTile(j, i, White);
-                        break;
-                }
+                map.GetColor(i, j, out c);
+                if (c != Color.black)
+                    DrawTile(j, i, c);
             }
         }
     }

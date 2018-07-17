@@ -97,7 +97,7 @@ public class Map
             map.Tiles = new char[map.Height][];
 
             //Read tiles section
-            ReadTiles(sr, map);
+            map.ReadTiles(sr);
 
             return map;
         }
@@ -130,21 +130,21 @@ public class Map
     /// <summary>
     /// Read tiles from the map file, adding tiles and filling obstacles in the array
     /// </summary>
-    private static void ReadTiles(StreamReader sr, Map map)
+    private void ReadTiles(StreamReader sr)
     {
         char c;
         string line;
 
-        for (int i = 0; i < map.Height; ++i)
+        for (int i = 0; i < Height; ++i)
         {
             line = sr.ReadLine();
-            map.Obstacles[i] = new bool[map.Width];
-            map.Tiles[i] = new char[map.Width];
+            Obstacles[i] = new bool[Width];
+            Tiles[i] = new char[Width];
 
-            for (int j = 0; j < map.Width; ++j)
+            for (int j = 0; j < Width; ++j)
             {
                 c = line[j];
-                map.Tiles[i][j] = c;
+                Tiles[i][j] = c;
 
                 switch (c)
                 {
@@ -152,18 +152,45 @@ public class Map
                     case 'O':
                     case 'T':
                     case 'W':
-                        map.Obstacles[i][j] = true;
+                        Obstacles[i][j] = true;
                         break;
                     case '.':
                     case 'G':
                     case 'S':
-                        map.Obstacles[i][j] = false;
-                        map.FreeTiles++;
+                        Obstacles[i][j] = false;
+                        FreeTiles++;
                         break;
                     default:
                         throw new Exception("Character not recognized");
                 }
             }
+        }
+    }
+
+
+    public void GetColor(int i, int j, out Color color)
+    {
+        switch (Tiles[i][j])
+        {
+            case 'T':
+                color = Color.green;
+                break;
+            case '.':
+            case 'G':
+                color = Color.white;
+                break;
+            case '@':
+            case 'O':
+                color = Color.black;
+                break;
+            case 'S':   //Swamp
+                color = Color.magenta;
+                break;
+            case 'W':   //Water
+                color = Color.blue;
+                break;
+            default:
+                throw new Exception("Character not recognized");
         }
     }
 

@@ -162,7 +162,7 @@ public class MapController : MapGraphContainer {
     // Update is called once per frame
     void Update()
     {
-        if (!EventSystem.current.IsPointerOverGameObject()) {
+        if (DisplayUtils.IsMouseOnScreen() && !EventSystem.current.IsPointerOverGameObject()) {
             camControl.HandleCameraControls();
 
             SelectGridPos();
