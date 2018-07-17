@@ -4,25 +4,20 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class MapController : MonoBehaviour {
-
-    public EventSystem eventSys;
+public class MapController : MapGraphContainer {
 
     public MessageBox MsgBox;
 
+    public CameraController camControl;
+
     private List<FileInfo> maps;
 
-    private SceneMapDisplay mapDisplay;
     private UIController uiCtrl;
-
-    private Map map;
-    private Graph graph;
 
     private TestResult displayedResult;
 
 	// Use this for initialization
 	void Start () {
-        mapDisplay = GetComponent<SceneMapDisplay>();
         uiCtrl = GetComponent<UIController>();
 
         //Populate list of maps
@@ -33,6 +28,7 @@ public class MapController : MonoBehaviour {
     public void LoadMap()
     {
         displayedResult = null; //Reset the displayed result
+        Clear();
 
         FileInfo current = maps[uiCtrl.DdlMaps.value];
         int ClusterSize = uiCtrl.Cluster.GetValue();
@@ -46,13 +42,14 @@ public class MapController : MonoBehaviour {
 
         uiCtrl.FillLayers(graph.depth);
 
-        mapDisplay.SetMap(map, graph);
+        camControl.ResetDefaultPosition(map.Width, map.Height);
+        SceneMapDisplay.SetMap(map);
 
         //Automatically draw the last layer when we load a new map
         if (graph.depth == 0)
-            mapDisplay.DrawClusters(map, null);
+            SceneMapDisplay.DrawClusters(map, null);
         else
-            mapDisplay.DrawClusters(map, graph.C[graph.depth - 1]);
+            SceneMapDisplay.DrawClusters(map, graph.C[graph.depth - 1]);
 
     }
 
@@ -140,8 +137,8 @@ public class MapController : MonoBehaviour {
         uiCtrl.AStarLength.text = displayedResult.AStarResult.PathLength.ToString();
 
         //Display the result
-        mapDisplay.DrawNormalPath(displayedResult.AStarResult.Path);
-        mapDisplay.DrawHpaPath(displayedResult.HPAStarResult.Path, graph.depth - uiCtrl.DdlLayers.value);
+        SceneMapDisplay.DrawNormalPath(displayedResult.AStarResult.Path);
+        SceneMapDisplay.DrawHpaPath(displayedResult.HPAStarResult.Path, graph.depth - uiCtrl.DdlLayers.value);
     }
 
     /// <summary>
@@ -154,21 +151,19 @@ public class MapController : MonoBehaviour {
         int layer = uiCtrl.DdlLayers.value;
 
         if (layer == 0)
-            mapDisplay.DrawClusters(map, null); //No clusters at the lower level
+            SceneMapDisplay.DrawClusters(map, null); //No clusters at the lower level
         else
-            mapDisplay.DrawClusters(map, graph.C[layer - 1]);
+            SceneMapDisplay.DrawClusters(map, graph.C[layer - 1]);
 
         if (displayedResult != null)
-            mapDisplay.DrawHpaPath(displayedResult.HPAStarResult.Path, graph.depth - layer);
+            SceneMapDisplay.DrawHpaPath(displayedResult.HPAStarResult.Path, graph.depth - layer);
     }
 
     // Update is called once per frame
     void Update()
     {
         if (!EventSystem.current.IsPointerOverGameObject()) {
-            mapDisplay.HandleZoom();
-            mapDisplay.HandleCameraMove();
-            mapDisplay.HandleCameraReset();
+            camControl.HandleCameraControls();
 
             SelectGridPos();
         }

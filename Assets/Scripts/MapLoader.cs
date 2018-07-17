@@ -1,11 +1,12 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
 using UnityEngine;
 
 
-public class MapLoader : MonoBehaviour {
+public class MapLoader : MapGraphContainer {
 
     public bool showClusters;
     private bool lastClusterActiveState;
@@ -20,20 +21,8 @@ public class MapLoader : MonoBehaviour {
     [HideInInspector]
     public string mapName;
 
-    private Map map;
-    private Graph graph;
-
     #region Sibling components
     
-    // Singleton instance for smooth access while in editor mode
-    private SceneMapDisplay _sceneMapDisplay = null;
-    SceneMapDisplay SceneMapDisplay { get {
-            if (_sceneMapDisplay == null)
-                _sceneMapDisplay = GetComponent<SceneMapDisplay>();
-            return _sceneMapDisplay;
-        }
-    }
-
     private AgentController agentCtrl = null;
 
     #endregion
@@ -45,17 +34,11 @@ public class MapLoader : MonoBehaviour {
 
         graph = new Graph(map, layers, clusterSize);
 
-        SceneMapDisplay.SetMap(map, graph);
+        // TODO: update camera default position
+        SceneMapDisplay.SetMap(map);
         SceneMapDisplay.DrawClusters(map, graph.C.LastOrDefault());
 
         SceneMapDisplay.ToggleClusters(showClusters);
-    }
-
-    public void Clear() {
-        map = null;
-        graph = null;
-
-        SceneMapDisplay.ClearMap();
     }
 
     public LinkedList<Edge> GetPath(GridTile start, GridTile dest, bool useHPA)

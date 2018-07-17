@@ -12,12 +12,6 @@ public class SceneMapDisplay : MonoBehaviour {
     public Color NormalPathColor;
     public Color HPAPathColor;
 
-    //Camera movement variables
-    public float ZoomSpeed;
-    public float MovementSpeed;
-
-    private float defaultCamSize;
-    private Vector3 defaultCamPos;
 
     //Variables to draw in scene
     public GameObject Tile2d;
@@ -33,14 +27,6 @@ public class SceneMapDisplay : MonoBehaviour {
     GameObject HpaPath;
     GameObject NormalPath;
 
-    void Awake()
-    {
-    }
-
-    // Use this for initialization
-    void Start()
-    {
-    }
 
     private void _Destroy(Object gameObject)
     {
@@ -51,12 +37,12 @@ public class SceneMapDisplay : MonoBehaviour {
     }
 
 
-    public void SetMap(Map map, Graph graph)
+    public void SetMap(Map map)
     {
         //Delete previous map's game objects
         Delete();
 
-        DrawMap(map, graph);
+        DrawMap(map);
     }
 
     public void ClearMap()
@@ -143,20 +129,8 @@ public class SceneMapDisplay : MonoBehaviour {
         Edges.SetActive(active);
     }
 
-    void DrawMap(Map map, Graph graph)
+    void DrawMap(Map map)
     {
-        //Adjust camera with respect to the map's size
-        defaultCamPos = new Vector3(map.Width / 2f, -map.Height / 2f, -map.Width);
-
-        //Set cam size w.r.t the biggest dimension
-        if (map.Width > map.Height)
-            defaultCamSize = (map.Width / ((float)Camera.main.pixelWidth / Camera.main.pixelHeight)) / 2f + 3;
-        else
-            defaultCamSize = map.Height / 2f + 3;
-
-        Camera.main.transform.position = defaultCamPos;
-        Camera.main.orthographicSize = defaultCamSize;
-
         //Instantiate Empty Containes for objects
         MapGameObj = new GameObject("Map");
         MapGameObj.transform.SetParent(transform, false);
@@ -321,39 +295,5 @@ public class SceneMapDisplay : MonoBehaviour {
         //x and y represents the location in the map. 
         //The tile we instantiate are centered, so we add up half a unit in both x and y direction
         DrawSprite(new Vector3(x + 0.5f, y + 0.5f, 0), Vector3.one, color, 1, Quaternion.identity, MapGameObj);
-    }
-
-	
-	// Update is called once per frame
-	void Update () {
-    }
-
-    public void HandleCameraReset()
-    {
-        if (Input.GetButtonDown("Reset")) {
-            Camera.main.transform.position = defaultCamPos;
-            Camera.main.orthographicSize = defaultCamSize;
-        }
-    }
-
-    public void HandleCameraMove()
-    {
-        if (Input.GetMouseButton(1))
-        {
-            Camera.main.transform.position += Vector3.left  * Input.GetAxis("Mouse X") * MovementSpeed;
-            Camera.main.transform.position += Vector3.down * Input.GetAxis("Mouse Y") * MovementSpeed;
-        }
-    }
-
-    public void HandleZoom()
-    {
-        float delta = Input.GetAxis("Mouse ScrollWheel");
-        if (delta != 0)
-        {
-            Camera.main.orthographicSize += ZoomSpeed * -delta;
-
-            //Bound minimum camera size
-            if (Camera.main.orthographicSize < 0.1f) Camera.main.orthographicSize = 0.1f;
-        }
     }
 }

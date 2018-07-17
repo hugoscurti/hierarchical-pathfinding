@@ -12,8 +12,8 @@ public class Graph
     //Keep a representation of the map by low level nodes
     public Dictionary<GridTile, Node> nodes;
 
-    int width;
-    int height;
+    readonly int width;
+    readonly int height;
 
     //We keep track of added nodes to remove them afterwards
     List<Node> AddedNodes;
