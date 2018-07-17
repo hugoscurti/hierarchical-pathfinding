@@ -150,13 +150,13 @@ public class Map
                 {
                     case '@':
                     case 'O':
-                        map.Obstacles[i][j] = true;
-                        break;
                     case 'T':
+                    case 'W':
                         map.Obstacles[i][j] = true;
                         break;
                     case '.':
                     case 'G':
+                    case 'S':
                         map.Obstacles[i][j] = false;
                         map.FreeTiles++;
                         break;
